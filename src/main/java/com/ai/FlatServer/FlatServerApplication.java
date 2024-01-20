@@ -1,11 +1,18 @@
 package com.ai.FlatServer;
 
+import com.ai.FlatServer.handler.CallHandler;
+import com.ai.FlatServer.repository.UserRegistry;
+import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 @SpringBootApplication
-//@EnableWebSocket
+@EnableWebSocket
 @EnableJpaAuditing
 public class FlatServerApplication {
 
@@ -13,30 +20,29 @@ public class FlatServerApplication {
         SpringApplication.run(FlatServerApplication.class, args);
     }
 
-//    @Bean
-//    public CallHandler callHandler() {
-//        return new CallHandler();
-//    }
+    @Bean
+    public CallHandler callHandler() {
+        return new CallHandler();
+    }
 
-//    @Bean
-//    public UserRegistry registry() {
-//        return new UserRegistry();
-//    }
+    @Bean
+    public UserRegistry registry() {
+        return new UserRegistry();
+    }
 
-//    @Bean
-//    public KurentoClient kurentoClient() {
-//        return KurentoClient.create();
-//    }
+    @Bean
+    public KurentoClient kurentoClient() {
+        return KurentoClient.create();
+    }
 
-//    @Bean
-//    public ServletServerContainerFactoryBean createServletServerContainerFactoryBean() {
-//        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
-//        container.setMaxTextMessageBufferSize(32768);
-//        return container;
-//    }
-//
-//    @Override
-//    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-//        registry.addHandler(callHandler(), "/audio").setAllowedOrigins("*");
-//    }
+    @Bean
+    public ServletServerContainerFactoryBean createServletServerContainerFactoryBean() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        container.setMaxTextMessageBufferSize(32768);
+        return container;
+    }
+    
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(callHandler(), "/audio").setAllowedOrigins("*");
+    }
 }
