@@ -6,6 +6,7 @@ import com.ai.FlatServer.domain.dto.file.FileDto;
 import com.ai.FlatServer.domain.dto.message.RequestMessageDto;
 import com.ai.FlatServer.domain.mapper.FileMapper;
 import com.ai.FlatServer.repository.FileInfoRepository;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
@@ -37,6 +38,18 @@ public class FileService {
     @Value("${uploadPath}")
     private String uploadPath;
 
+    @PostConstruct
+    public void init() {
+        File file = new File(uploadPath);
+        if (file.mkdirs()) {
+            if (!(file.setExecutable(true) && file.setReadable(true) && file.setWritable(true))) {
+                log.error("Directory Authority Set Failed!!");
+            }
+        } else {
+            log.error("Directory creation failed!!");
+        }
+    }
+
     public void saveFile(@NotNull MultipartFile multipartFile) throws IOException {
         String originalFileName = multipartFile.getOriginalFilename();
         log.info("received file : " + originalFileName);
@@ -44,7 +57,7 @@ public class FileService {
         switch (getExt(Objects.requireNonNull(originalFileName))) {
             case "pdf" -> savePdf(multipartFile);
             case "json" -> saveJson(multipartFile);
-            case "xml" -> saveXml(multipartFile);
+            case "mxl" -> saveXml(multipartFile);
             default -> throw new UnsupportedEncodingException();
         }
     }
@@ -119,7 +132,7 @@ public class FileService {
                 .findByUid(uid)
                 .orElseThrow(NoSuchElementException::new)
                 .isXmlPresent()) {
-            UrlResource urlResource = new UrlResource("file:" + uploadPath + uid + ".xml");
+            UrlResource urlResource = new UrlResource("file:" + uploadPath + uid + ".mxl");
             String encodedFileName = UriUtils.encode(uid, StandardCharsets.UTF_8);
 
             return FileDto.builder()

@@ -52,7 +52,7 @@ public class FileController {
             xmlFileDto = fileService.getXml(uid);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                            .filename(xmlFileDto.getEncodedFileName() + ".xml")
+                            .filename(xmlFileDto.getEncodedFileName() + ".mxl")
                             .build()
                             .toString())
                     .body(xmlFileDto.getFile());
