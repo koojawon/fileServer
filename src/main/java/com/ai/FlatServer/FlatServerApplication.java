@@ -1,7 +1,7 @@
 package com.ai.FlatServer;
 
-import com.ai.FlatServer.handler.CallHandler;
-import com.ai.FlatServer.repository.UserRegistry;
+import com.ai.FlatServer.handler.PresenterHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,6 +14,7 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 @SpringBootApplication
 @EnableWebSocket
 @EnableJpaAuditing
+@Slf4j
 public class FlatServerApplication {
 
     public static void main(String[] args) {
@@ -21,13 +22,8 @@ public class FlatServerApplication {
     }
 
     @Bean
-    public CallHandler callHandler() {
-        return new CallHandler();
-    }
-
-    @Bean
-    public UserRegistry registry() {
-        return new UserRegistry();
+    public PresenterHandler clientHandler() {
+        return new PresenterHandler();
     }
 
     @Bean
@@ -41,8 +37,9 @@ public class FlatServerApplication {
         container.setMaxTextMessageBufferSize(32768);
         return container;
     }
-    
+
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(callHandler(), "/audio").setAllowedOrigins("*");
+        registry.addHandler(clientHandler(), "/audio").setAllowedOrigins("*");
     }
+
 }

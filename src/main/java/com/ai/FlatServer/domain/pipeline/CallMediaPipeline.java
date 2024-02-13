@@ -17,8 +17,8 @@ public class CallMediaPipeline {
     public CallMediaPipeline(KurentoClient kurento) {
         try {
             this.pipeline = kurento.createMediaPipeline();
-            this.calleeWebRtcEp = new WebRtcEndpoint.Builder(pipeline).build();
-            this.callerWebRtcEp = new WebRtcEndpoint.Builder(pipeline).build();
+            this.calleeWebRtcEp = new WebRtcEndpoint.Builder(pipeline).useDataChannels().build();
+            this.callerWebRtcEp = new WebRtcEndpoint.Builder(pipeline).useDataChannels().build();
 
             this.callerWebRtcEp.connect(this.calleeWebRtcEp);
             this.calleeWebRtcEp.connect(this.callerWebRtcEp);

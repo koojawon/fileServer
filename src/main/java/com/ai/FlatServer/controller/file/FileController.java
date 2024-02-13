@@ -3,10 +3,12 @@ package com.ai.FlatServer.controller.file;
 import com.ai.FlatServer.domain.dto.ResponseFile;
 import com.ai.FlatServer.domain.dto.file.FileDto;
 import com.ai.FlatServer.service.FileService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
+@Slf4j
 public class FileController {
 
     private final FileService fileService;
@@ -45,8 +48,8 @@ public class FileController {
         return ResponseEntity.ok().body(fileService.getAllFiles());
     }
 
-    @GetMapping("/xml")
-    public ResponseEntity<UrlResource> getXml(@RequestParam String uid) throws MalformedURLException {
+    @GetMapping
+    public ResponseEntity<UrlResource> getMxl(@RequestParam String uid) throws MalformedURLException {
         FileDto xmlFileDto;
         try {
             xmlFileDto = fileService.getXml(uid);
@@ -61,24 +64,9 @@ public class FileController {
         }
     }
 
-    @GetMapping("/json")
-    public ResponseEntity<UrlResource> getJson(@RequestParam String uid) throws MalformedURLException {
-        FileDto jsonFileDto;
-        try {
-            jsonFileDto = fileService.getJson(uid);
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                            .filename(jsonFileDto.getEncodedFileName() + ".xml")
-                            .build()
-                            .toString())
-                    .body(jsonFileDto.getFile());
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(404).build();
-        }
-    }
-
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestPart(value = "multipartFile") List<MultipartFile> multipartFile) {
+    @PostMapping
+    public ResponseEntity<String> uploadFile(HttpServletRequest httpRequest,
+                                             @RequestPart(value = "multipartFile") List<MultipartFile> multipartFile) {
         try {
             for (MultipartFile m : multipartFile) {
                 fileService.saveFile(m);
