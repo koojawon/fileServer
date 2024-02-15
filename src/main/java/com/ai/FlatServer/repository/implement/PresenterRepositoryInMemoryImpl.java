@@ -29,6 +29,7 @@ public class PresenterRepositoryInMemoryImpl implements PresenterRepository {
     }
 
     public void removeListeningStatus(String id) {
+        listeningSessions.get(id).getWebRtcEndpoint().release();
         listeningSessions.remove(id);
     }
 
