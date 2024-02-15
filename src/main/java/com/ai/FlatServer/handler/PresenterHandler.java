@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.IceCandidate;
@@ -24,8 +23,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class PresenterHandler extends TextWebSocketHandler {
 
     private static final Gson gson = new GsonBuilder().create();
-    private final ConcurrentHashMap<String, UserSession> viewers = new ConcurrentHashMap<>();
-
     private KurentoClient kurento;
     private PresenterRepositoryInMemoryImpl presenterRepository;
 
@@ -124,7 +121,7 @@ public class PresenterHandler extends TextWebSocketHandler {
     private void handleErrorResponse(Throwable throwable, WebSocketSession session, String responseId)
             throws IOException {
         log.error(throwable.getMessage(), throwable);
-        
+
         session.sendMessage(new TextMessage(
                 new JsonMessageBuilder()
                         .addProperty("id", responseId)
