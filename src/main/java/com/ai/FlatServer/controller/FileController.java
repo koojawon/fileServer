@@ -1,4 +1,4 @@
-package com.ai.FlatServer.controller.file;
+package com.ai.FlatServer.controller;
 
 import com.ai.FlatServer.domain.dto.ResponseFile;
 import com.ai.FlatServer.domain.dto.file.FileDto;
