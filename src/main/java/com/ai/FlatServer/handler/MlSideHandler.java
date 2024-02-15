@@ -1,11 +1,13 @@
 package com.ai.FlatServer.handler;
 
+import com.ai.FlatServer.domain.dto.message.IceCandidateMessage;
 import com.ai.FlatServer.domain.dto.message.TargetInfoResponseMessage;
 import com.ai.FlatServer.domain.session.UserSession;
 import com.ai.FlatServer.repository.implement.PresenterRepositoryInMemoryImpl;
 import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kurento.client.IceCandidate;
 import org.kurento.client.WebRtcEndpoint;
 import org.kurento.jsonrpc.JsonUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -37,6 +39,17 @@ public class MlSideHandler {
     @RabbitListener(queues = "pdfJobQueue.listenerQueue")
     public void startViewingTarget(TargetInfoResponseMessage message) {
         viewer(message);
+    }
+
+    @RabbitListener(queues = "pdfJobQueue.listenerQueue")
+    public void onIceCandidateMessage(IceCandidateMessage message) {
+        onIceCandidate(message);
+    }
+
+    private void onIceCandidate(IceCandidateMessage message) {
+        IceCandidate candidate = new IceCandidate(message.getCandidate(), message.getSdpMid(),
+                message.getSdpMLineIndex());
+        mlSession.addCandidate(candidate);
     }
 
     private synchronized void viewer(TargetInfoResponseMessage message) {
@@ -86,7 +99,7 @@ public class MlSideHandler {
             rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
 
             nextWebRtc.gatherCandidates();
-            presenterRepository.setListener(message.getTargetId(), new UserSession());
+            presenterRepository.setListener(message.getTargetId(), mlSession);
         }
     }
 
