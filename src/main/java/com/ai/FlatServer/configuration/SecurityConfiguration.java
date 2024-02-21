@@ -40,17 +40,17 @@ public class SecurityConfiguration {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(
+                .headers(conf -> conf.frameOptions(
                         FrameOptionsConfig::disable))
                 .sessionManagement(
-                        httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
+                        conf -> conf.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(conf -> {
-                    conf.requestMatchers("/").permitAll()
-                            .requestMatchers("/sign-up").permitAll()
+                    conf.requestMatchers("/", "/sign-up").permitAll()
                             .anyRequest().authenticated();
                 })
-                .addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class).build();
+                .addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
+                .build();
     }
 
     @Bean
