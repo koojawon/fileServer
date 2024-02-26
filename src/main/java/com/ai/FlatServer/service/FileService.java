@@ -62,7 +62,6 @@ public class FileService {
 
         switch (getExt(Objects.requireNonNull(originalFileName))) {
             case "pdf" -> savePdf(multipartFile);
-            case "json" -> saveJson(multipartFile);
             case "mxl" -> saveXml(multipartFile);
             default -> throw new UnsupportedEncodingException();
         }
