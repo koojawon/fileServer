@@ -24,7 +24,7 @@ public class MlSideHandler {
     private final PresenterRepositoryInMemoryImpl presenterRepository;
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
-    @org.springframework.beans.factory.annotation.Value("${rabbitmq.exchange.name}")
+    @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
     private UserSession mlSession;
 
