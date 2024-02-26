@@ -83,7 +83,6 @@ public class FileService {
         FileInfoDao fileInfoDao = FileInfoDao.builder()
                 .originalFileName(originalFileName)
                 .uid(fileUid)
-                .jsonPresent(false)
                 .xmlPresent(false)
                 .build();
         log.info(fileInfoDao.toString());
@@ -91,16 +90,6 @@ public class FileService {
         jobMessageService.sendRequestMessage(RequestMessage.builder().fileUid(fileUid).build());
     }
 
-    @Transactional
-    private void saveJson(@NotNull MultipartFile multipartFile) throws IOException {
-        String originalFileName = multipartFile.getOriginalFilename();
-        multipartFile.transferTo(new File(getFullPath(originalFileName)));
-        FileInfoDao fileInfoDao = fileInfoRepository.findByUid(
-                        Objects.requireNonNull(originalFileName).substring(0, originalFileName.lastIndexOf(".")))
-                .orElseThrow(NoSuchElementException::new);
-        fileInfoDao.setJsonPresent(true);
-        fileInfoRepository.save(fileInfoDao);
-    }
 
     @Transactional
     private void saveXml(@NotNull MultipartFile multipartFile) throws IOException {
@@ -139,22 +128,6 @@ public class FileService {
                 .orElseThrow(NoSuchElementException::new)
                 .isXmlPresent()) {
             UrlResource urlResource = new UrlResource("file:" + uploadPath + uid + ".mxl");
-            String encodedFileName = UriUtils.encode(uid, StandardCharsets.UTF_8);
-
-            return FileDto.builder()
-                    .file(urlResource)
-                    .encodedFileName(encodedFileName)
-                    .build();
-        }
-        throw new NoSuchElementException();
-    }
-
-    public FileDto getJson(String uid) throws MalformedURLException, NoSuchElementException {
-        if (fileInfoRepository
-                .findByUid(uid)
-                .orElseThrow(NoSuchElementException::new)
-                .isJsonPresent()) {
-            UrlResource urlResource = new UrlResource("file:" + uploadPath + uid + ".json");
             String encodedFileName = UriUtils.encode(uid, StandardCharsets.UTF_8);
 
             return FileDto.builder()
