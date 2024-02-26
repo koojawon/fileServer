@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
@@ -31,7 +32,7 @@ public class JwtService {
     private final UserRepository userRepository;
     @Value("${jwt.secretKey}")
     private final String secretKey;
-    private final SecretKey encodedKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+    private SecretKey encodedKey;
     @Value("{jwt.access.expiration}")
     private Long accessTokenExpirationPeriod;
     @Value("{jwt.refresh.expiration}")
@@ -40,6 +41,11 @@ public class JwtService {
     private String accessHeader;
     @Value("{jwt.refresh.header}")
     private String refreshHeader;
+
+    @PostConstruct
+    public void initKey() {
+        this.encodedKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+    }
 
     public String createAccessToken(String email) {
         return Jwts.builder()
