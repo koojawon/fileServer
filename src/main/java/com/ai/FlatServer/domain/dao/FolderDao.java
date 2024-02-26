@@ -30,9 +30,9 @@ public class FolderDao extends BaseEntity {
 
     @OneToOne
     @JoinColumn(name = "parent_id")
-    private FolderDao parent;
+    private final FolderDao parent;
 
     @OneToOne
     @JoinColumn(name = "owner_id")
-    private User user;
+    private final User user;
 }
