@@ -2,114 +2,134 @@ package com.ai.FlatServer.handler;
 
 import com.ai.FlatServer.domain.dto.message.IceCandidateMessage;
 import com.ai.FlatServer.domain.dto.message.TargetInfoResponseMessage;
+import com.ai.FlatServer.domain.mapper.JsonMessageDecoder;
+import com.ai.FlatServer.domain.mapper.JsonMessageEncoder;
 import com.ai.FlatServer.domain.session.UserSession;
-import com.ai.FlatServer.repository.implement.PresenterRepositoryInMemoryImpl;
+import com.ai.FlatServer.repository.implement.ClientRepositoryInMemoryImpl;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.IceCandidate;
+import org.kurento.client.KurentoClient;
+import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
-import org.kurento.jsonrpc.JsonUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class MlSideHandler {
 
     private final RabbitTemplate rabbitTemplate;
-    private final PresenterRepositoryInMemoryImpl presenterRepository;
+    private final ClientRepositoryInMemoryImpl clientRepository;
+    private final JsonMessageEncoder encoder;
+    private final JsonMessageDecoder decoder;
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
-    @org.springframework.beans.factory.annotation.Value("${rabbitmq.exchange.name}")
+    @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
-    private UserSession mlSession;
+    @Autowired
+    private KurentoClient kurentoClient;
 
     public void sendTargetInfo(String targetId) {
-
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "targetInfo");
-        response.addProperty("targetId", targetId);
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
+        String json = encoder.toTargetInfoMessage(targetId);
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, json);
     }
 
-    @RabbitListener(queues = "pdfJobQueue.listenerQueue")
-    public void startViewingTarget(TargetInfoResponseMessage message) {
-        viewer(message);
-    }
-
-    @RabbitListener(queues = "pdfJobQueue.listenerQueue")
-    public void onIceCandidateMessage(IceCandidateMessage message) {
-        onIceCandidate(message);
+    @RabbitListener(queues = "pdfJobQueue.senderQueue")
+    public void handleMessage(String message) throws IOException {
+        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+        switch (jsonObject.get("id").getAsString()) {
+            case "viewer" -> viewer(decoder.toTargetInfoResponseMessage(jsonObject));
+            case "onIceCandidate" -> onIceCandidate(decoder.toIceCandidateMessage(jsonObject));
+        }
     }
 
     private void onIceCandidate(IceCandidateMessage message) {
         IceCandidate candidate = new IceCandidate(message.getCandidate(), message.getSdpMid(),
                 message.getSdpMLineIndex());
-        mlSession.addCandidate(candidate);
+        clientRepository.getViewer(message.getUuid()).addCandidate(candidate);
     }
 
-    private synchronized void viewer(TargetInfoResponseMessage message) {
-        if (presenterRepository.getUserSessionBySessionId(message.getTargetId()) == null
-                || presenterRepository.getUserSessionBySessionId(message.getTargetId()).getWebRtcEndpoint() == null) {
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "viewerResponse");
-            response.addProperty("response", "rejected");
-            response.addProperty("message", "No such sender.");
-            rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
+    private void viewer(TargetInfoResponseMessage message) throws IOException {
+        if (clientRepository.getPresenter(message.getTargetId()) == null) {
+            String json = encoder.toRejectMessage();
+            rabbitTemplate.convertAndSend(exchangeName, routingKey, json);
         } else {
-            if (presenterRepository.getListeningStatus(message.getTargetId())) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "viewerResponse");
-                response.addProperty("response", "rejected");
-                response.addProperty("message", "already listening to this session.");
-                rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
-                return;
-            }
-            mlSession = new UserSession();
+            UserSession mlSession = UserSession.builder().uuid(message.getUuid()).build();
+            UserSession presenterSession = clientRepository.getPresenter(message.getTargetId());
 
-            WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(
-                    presenterRepository.getMediaPipelineBySessionId(message.getTargetId())).useDataChannels().build();
+            mlSession.setSdpOffer(message.getSdpOffer());
 
-            nextWebRtc.addIceCandidateFoundListener(event -> {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+            clientRepository.putMediaPipelineBySessionId(presenterSession.getSession().getId(),
+                    kurentoClient.createMediaPipeline());
+
+            MediaPipeline m = clientRepository.getMediaPipelineBySessionId(presenterSession.getSession().getId());
+
+            m.setLatencyStats(true);
+
+            presenterSession.setWebRtcEndpoint(
+                    new WebRtcEndpoint.Builder(
+                            clientRepository.getMediaPipelineBySessionId(presenterSession.getSession().getId()))
+                            .useDataChannels()
+                            .build());
+            WebRtcEndpoint presenterWebRtc = presenterSession.getWebRtcEndpoint();
+            WebRtcEndpoint viewerWebRtc = new WebRtcEndpoint.Builder(
+                    clientRepository.getMediaPipelineBySessionId(message.getTargetId())).useDataChannels().build();
+
+            presenterWebRtc.addIceCandidateFoundListener(iceCandidateFoundEvent -> {
+                JsonObject response = encoder.toIceCandidateJsonObject(iceCandidateFoundEvent.getCandidate());
                 try {
-                    rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
-                } catch (Exception e) {
-                    log.debug(e.getMessage());
+                    synchronized (presenterSession.getSession()) {
+                        presenterSession.sendMessage(response);
+                    }
+                } catch (IOException e) {
+                    log.error(e.getMessage());
                 }
             });
 
-            mlSession.setWebRtcEndpoint(nextWebRtc);
-            presenterRepository.getUserSessionBySessionId(message.getTargetId()).getWebRtcEndpoint()
-                    .connect(nextWebRtc);
-            String sdpOffer = message.getSdpOffer();
-            String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
+            viewerWebRtc.addIceCandidateFoundListener(event -> {
+                String json = encoder.toIceCandidateMessage(event.getCandidate());
+                try {
+                    rabbitTemplate.convertAndSend(exchangeName, routingKey, json);
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
+            });
 
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "viewerResponse");
-            response.addProperty("response", "accepted");
-            response.addProperty("sdpAnswer", sdpAnswer);
+            mlSession.setWebRtcEndpoint(viewerWebRtc);
+            presenterWebRtc.connect(viewerWebRtc);
+            viewerWebRtc.connect(presenterWebRtc);
 
-            rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
+            String presenterSdpAnswer = presenterWebRtc.processOffer(presenterSession.getSdpOffer());
+            String viewerSdpAnswer = viewerWebRtc.processOffer(message.getSdpOffer());
 
-            nextWebRtc.gatherCandidates();
-            presenterRepository.setListener(message.getTargetId(), mlSession);
+            synchronized (presenterSession.getSession()) {
+                presenterSession.sendMessage(encoder.toPresenterResponse(presenterSdpAnswer));
+            }
+
+            String json = encoder.toViewerResponse(viewerSdpAnswer);
+            rabbitTemplate.convertAndSend(exchangeName, routingKey, json);
+
+            presenterWebRtc.gatherCandidates();
+            viewerWebRtc.gatherCandidates();
+            clientRepository.setListenRelation(message.getTargetId(), mlSession.getUuid());
+            clientRepository.putViewer(mlSession);
         }
     }
 
-    public void notifyEnded(String id) {
-        if (presenterRepository.getListeningStatus(id)) {
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "stopCommunication");
-            response.addProperty("targetId", id);
-            rabbitTemplate.convertAndSend(exchangeName, routingKey, response);
-            presenterRepository.removeListeningStatus(id);
+    public void notifyEnd(String id) {
+        String uuid = clientRepository.getViewerWithPresenter(id);
+        if (uuid != null) {
+            String json = encoder.toEndMessage(id);
+            rabbitTemplate.convertAndSend(exchangeName, routingKey, json);
+            clientRepository.removeViewer(uuid);
         }
     }
 }
