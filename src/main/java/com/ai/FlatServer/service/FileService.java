@@ -3,7 +3,7 @@ package com.ai.FlatServer.service;
 import com.ai.FlatServer.domain.dao.FileInfoDao;
 import com.ai.FlatServer.domain.dto.ResponseFile;
 import com.ai.FlatServer.domain.dto.file.FileDto;
-import com.ai.FlatServer.domain.dto.message.RequestMessageDto;
+import com.ai.FlatServer.domain.dto.message.RequestMessage;
 import com.ai.FlatServer.domain.mapper.FileMapper;
 import com.ai.FlatServer.repository.FileInfoRepository;
 import jakarta.annotation.PostConstruct;
@@ -34,19 +34,25 @@ import org.springframework.web.util.UriUtils;
 public class FileService {
 
     private final FileInfoRepository fileInfoRepository;
-    private final MessageService messageService;
+    private final JobMessageService jobMessageService;
     @Value("${uploadPath}")
     private String uploadPath;
 
     @PostConstruct
     public void init() {
-        File file = new File(uploadPath);
-        if (file.mkdirs()) {
-            if (!(file.setExecutable(true) && file.setReadable(true) && file.setWritable(true))) {
-                log.error("Directory Authority Set Failed!!");
+        File file = new File(uploadPath.substring(0, uploadPath.length() - 1));
+        if (!file.exists()) {
+            if (file.mkdirs()) {
+                String osName = System.getProperty("os.name").toLowerCase();
+                if (osName.contains("linux") && !(file.setExecutable(true)
+                        && file.setReadable(true) && file.setWritable(true))) {
+                    log.error("Directory Authority Set Failed!!");
+                }
+            } else {
+                log.error("Directory creation failed!! : ");
             }
         } else {
-            log.error("Directory creation failed!!");
+            log.info("Directory exists...");
         }
     }
 
@@ -82,7 +88,7 @@ public class FileService {
                 .build();
         log.info(fileInfoDao.toString());
         fileInfoRepository.save(fileInfoDao);
-        messageService.sendRequestMessage(RequestMessageDto.builder().fileUid(fileUid).build());
+        jobMessageService.sendRequestMessage(RequestMessage.builder().fileUid(fileUid).build());
     }
 
     @Transactional
