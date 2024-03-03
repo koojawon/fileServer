@@ -11,5 +11,6 @@ import lombok.RequiredArgsConstructor;
 public class TargetInfoResponseMessage {
     private final String id;
     private final String targetId;
+    private final String uuid;
     private final String sdpOffer;
 }
