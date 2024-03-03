@@ -7,6 +7,7 @@ build/
 *.yml
 *.jks
 *.p12
+resources/
 
 ### STS ###
 .apt_generated
