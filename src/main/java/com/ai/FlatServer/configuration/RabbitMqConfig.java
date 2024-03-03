@@ -1,9 +1,5 @@
 package com.ai.FlatServer.configuration;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -26,27 +22,7 @@ public class RabbitMqConfig {
     private String rabbitmqUsername;
     @Value("${spring.rabbitmq.password}")
     private String rabbitmqPassword;
-    @Value("${rabbitmq.queue.name}")
-    private String queueName;
-    @Value("${rabbitmq.exchange.name}")
-    private String exchangeName;
-    @Value("${rabbitmq.routing.key}")
-    private String routingKey;
 
-    @Bean
-    public Queue queue() {
-        return new Queue(queueName);
-    }
-
-    @Bean
-    public TopicExchange exchange() {
-        return new TopicExchange(exchangeName);
-    }
-
-    @Bean
-    public Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-    }
 
     @Bean
     public ConnectionFactory connectionFactory() {
