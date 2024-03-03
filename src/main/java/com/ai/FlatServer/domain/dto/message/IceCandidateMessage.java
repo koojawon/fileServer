@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 public class IceCandidateMessage {
     private String id;
+    private String uuid;
     private String candidate;
     private String sdpMid;
     private int sdpMLineIndex;
