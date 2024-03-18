@@ -53,6 +53,9 @@ dependencies {
     implementation 'org.webjars.bower:ekko-lightbox:5.2.0'
     implementation 'org.webjars.bower:jquery:3.7.1'
 
+    //swagger api
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+
     //test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
