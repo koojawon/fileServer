@@ -1,11 +1,12 @@
-package com.ai.FlatServer.service;
+package com.ai.FlatServer.service.file;
 
 import com.ai.FlatServer.domain.dao.FileInfoDao;
 import com.ai.FlatServer.domain.dto.ResponseFile;
 import com.ai.FlatServer.domain.dto.file.FileDto;
-import com.ai.FlatServer.domain.dto.message.RequestMessage;
 import com.ai.FlatServer.domain.mapper.FileMapper;
 import com.ai.FlatServer.repository.FileInfoRepository;
+import com.ai.FlatServer.service.MessageService;
+import com.google.gson.JsonObject;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
@@ -34,7 +35,7 @@ import org.springframework.web.util.UriUtils;
 public class FileService {
 
     private final FileInfoRepository fileInfoRepository;
-    private final JobMessageService jobMessageService;
+    private final MessageService messageService;
     @Value("${uploadPath}")
     private String uploadPath;
 
@@ -56,61 +57,59 @@ public class FileService {
         }
     }
 
-    public void saveFile(@NotNull MultipartFile multipartFile) throws IOException {
+    public Long saveFile(@NotNull MultipartFile multipartFile) throws IOException {
         String originalFileName = multipartFile.getOriginalFilename();
         log.info("received file : " + originalFileName);
 
         switch (getExt(Objects.requireNonNull(originalFileName))) {
-            case "pdf" -> savePdf(multipartFile);
-            case "json" -> saveJson(multipartFile);
-            case "mxl" -> saveXml(multipartFile);
+            case "pdf" -> {
+                return savePdf(multipartFile);
+            }
+            case "mxl" -> saveMxl(multipartFile);
             default -> throw new UnsupportedEncodingException();
         }
+        return -1L;
     }
 
     @Transactional
-    private void savePdf(@NotNull MultipartFile multipartFile) throws IOException {
+    private Long savePdf(@NotNull MultipartFile multipartFile) throws IOException {
         String originalFileName = Normalizer.normalize(Objects.requireNonNull(multipartFile.getOriginalFilename()),
                 Form.NFC);
         String fileUid = UUID.randomUUID().toString();
         String ext = getExt(Objects.requireNonNull(originalFileName));
-
-        log.info(String.valueOf(multipartFile.getSize()));
-        log.info(getFullPath(fileUid + "." + ext));
-
         multipartFile.transferTo(new File(getFullPath(fileUid + "." + ext)));
-
         FileInfoDao fileInfoDao = FileInfoDao.builder()
                 .originalFileName(originalFileName)
                 .uid(fileUid)
-                .jsonPresent(false)
-                .xmlPresent(false)
+                .mxlPresent(false)
                 .build();
-        log.info(fileInfoDao.toString());
-        fileInfoRepository.save(fileInfoDao);
-        jobMessageService.sendRequestMessage(RequestMessage.builder().fileUid(fileUid).build());
+        fileInfoRepository.saveAndFlush(fileInfoDao);
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "File");
+        jsonObject.addProperty("fileUid", fileUid);
+
+        messageService.sendMessage(jsonObject);
+
+        FileInfoDao savedFileInfoDao = fileInfoRepository.findByUid(fileUid).orElseThrow();
+        log.info("File saved : " + savedFileInfoDao);
+        return savedFileInfoDao.getId();
+    }
+
+
+    public boolean getMxlState(Long id) {
+        return fileInfoRepository.findById(id).orElseThrow(NoSuchElementException::new).isMxlPresent();
     }
 
     @Transactional
-    private void saveJson(@NotNull MultipartFile multipartFile) throws IOException {
+    private void saveMxl(@NotNull MultipartFile multipartFile) throws IOException {
         String originalFileName = multipartFile.getOriginalFilename();
+
         multipartFile.transferTo(new File(getFullPath(originalFileName)));
         FileInfoDao fileInfoDao = fileInfoRepository.findByUid(
                         Objects.requireNonNull(originalFileName).substring(0, originalFileName.lastIndexOf(".")))
                 .orElseThrow(NoSuchElementException::new);
-        fileInfoDao.setJsonPresent(true);
-        fileInfoRepository.save(fileInfoDao);
-    }
-
-    @Transactional
-    private void saveXml(@NotNull MultipartFile multipartFile) throws IOException {
-        String originalFileName = multipartFile.getOriginalFilename();
-
-        multipartFile.transferTo(new File(getFullPath(originalFileName)));
-        FileInfoDao fileInfoDao = fileInfoRepository.findByUid(
-                        Objects.requireNonNull(originalFileName).substring(0, originalFileName.lastIndexOf(".")))
-                .orElseThrow(NoSuchElementException::new);
-        fileInfoDao.setXmlPresent(true);
+        fileInfoDao.setMxlPresent(true);
         fileInfoRepository.save(fileInfoDao);
     }
 
@@ -118,13 +117,16 @@ public class FileService {
         return originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
     }
 
+    private String subExt(String originalFileName) {
+        return originalFileName.substring(0, originalFileName.lastIndexOf("."));
+    }
+
     private String getFullPath(String fileName) {
-        log.info(uploadPath);
         return uploadPath + fileName;
     }
 
-    public FileDto getPdf(String fileUid) throws MalformedURLException {
-        FileInfoDao fileInfoDao = fileInfoRepository.findByUid(fileUid).orElseThrow(NoSuchElementException::new);
+    public FileDto getPdf(String fileId) throws MalformedURLException {
+        FileInfoDao fileInfoDao = fileInfoRepository.findByUid(fileId).orElseThrow(NoSuchElementException::new);
         UrlResource urlResource = new UrlResource("file:" + uploadPath + fileInfoDao.getUid() + ".pdf");
         String encodedFileName = UriUtils.encode(fileInfoDao.getUid(), StandardCharsets.UTF_8);
         return FileDto.builder()
@@ -133,29 +135,15 @@ public class FileService {
                 .build();
     }
 
-    public FileDto getXml(String uid) throws MalformedURLException {
-        if (fileInfoRepository
-                .findByUid(uid)
-                .orElseThrow(NoSuchElementException::new)
-                .isXmlPresent()) {
-            UrlResource urlResource = new UrlResource("file:" + uploadPath + uid + ".mxl");
-            String encodedFileName = UriUtils.encode(uid, StandardCharsets.UTF_8);
+    public FileDto getMxl(Long id) throws MalformedURLException {
+        FileInfoDao fileInfoDao = fileInfoRepository
+                .findById(id)
+                .orElseThrow(NoSuchElementException::new);
 
-            return FileDto.builder()
-                    .file(urlResource)
-                    .encodedFileName(encodedFileName)
-                    .build();
-        }
-        throw new NoSuchElementException();
-    }
-
-    public FileDto getJson(String uid) throws MalformedURLException, NoSuchElementException {
-        if (fileInfoRepository
-                .findByUid(uid)
-                .orElseThrow(NoSuchElementException::new)
-                .isJsonPresent()) {
-            UrlResource urlResource = new UrlResource("file:" + uploadPath + uid + ".json");
-            String encodedFileName = UriUtils.encode(uid, StandardCharsets.UTF_8);
+        if (fileInfoDao.isMxlPresent()) {
+            UrlResource urlResource = new UrlResource("file:" + uploadPath + fileInfoDao.getUid() + ".mxl");
+            String encodedFileName = UriUtils.encode(subExt(fileInfoDao.getOriginalFileName()) + ".mxl",
+                    StandardCharsets.UTF_8);
 
             return FileDto.builder()
                     .file(urlResource)
