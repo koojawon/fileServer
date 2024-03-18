@@ -2,6 +2,7 @@ package com.ai.FlatServer.repository.implement;
 
 import com.ai.FlatServer.domain.session.UserSession;
 import com.ai.FlatServer.repository.ClientRepository;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import org.kurento.client.MediaPipeline;
 import org.springframework.stereotype.Repository;
@@ -11,8 +12,9 @@ public class ClientRepositoryInMemoryImpl implements ClientRepository {
 
     private final ConcurrentHashMap<String, UserSession> viewerSessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, UserSession> presenterSessions = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, MediaPipeline> pipelines = new ConcurrentHashMap<>();
 
+    private final ConcurrentHashMap<String, UserSession> userSessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, MediaPipeline> pipelines = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> listenRelations = new ConcurrentHashMap<>();
 
 
@@ -26,21 +28,28 @@ public class ClientRepositoryInMemoryImpl implements ClientRepository {
         listenRelations.remove(presenterSessionId);
     }
 
+    @Override
+    public void putUser(String id, UserSession session) {
+        userSessions.put(id, session);
+    }
+
+    @Override
+    public UserSession getUser(String id) {
+        return userSessions.get(id);
+    }
+
+    @Override
+    public void removeUser(String id) {
+        if (userSessions.get(id) != null) {
+            userSessions.get(id).getWebRtcEndpoint().release();
+            userSessions.remove(id);
+            return;
+        }
+        throw new NoSuchElementException();
+    }
+
     public String getViewerWithPresenter(String sessionId) {
         return listenRelations.get(sessionId);
-    }
-
-    public void putViewer(UserSession viewerSession) {
-        viewerSessions.put(viewerSession.getUuid(), viewerSession);
-    }
-
-    public UserSession getViewer(String uuid) {
-        return viewerSessions.get(uuid);
-    }
-
-    public void removeViewer(String id) {
-        viewerSessions.get(id).getWebRtcEndpoint().release();
-        viewerSessions.remove(id);
     }
 
     public MediaPipeline getMediaPipelineBySessionId(String id) {
@@ -57,18 +66,4 @@ public class ClientRepositoryInMemoryImpl implements ClientRepository {
             pipelines.remove(id);
         }
     }
-
-    public UserSession getPresenter(String id) {
-        return presenterSessions.get(id);
-    }
-
-    public void putPresenter(String id, UserSession userSession) {
-        presenterSessions.put(id, userSession);
-    }
-
-    public void removePresenter(String id) {
-        presenterSessions.remove(id);
-    }
-
-
 }
