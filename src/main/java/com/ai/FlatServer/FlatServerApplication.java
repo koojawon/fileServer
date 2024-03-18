@@ -1,6 +1,6 @@
 package com.ai.FlatServer;
 
-import com.ai.FlatServer.handler.PresenterHandler;
+import com.ai.FlatServer.controller.webrtc.PresenterController;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
@@ -23,8 +23,8 @@ public class FlatServerApplication implements WebSocketConfigurer {
     }
 
     @Bean
-    public PresenterHandler clientHandler() {
-        return new PresenterHandler();
+    public PresenterController clientHandler() {
+        return new PresenterController();
     }
 
 
