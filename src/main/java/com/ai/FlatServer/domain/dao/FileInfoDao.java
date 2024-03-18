@@ -31,11 +31,6 @@ public class FileInfoDao extends BaseEntity {
     @Column(nullable = false, updatable = false, name = "uid")
     private String uid;
 
-    @Column(nullable = false, name = "json")
-    private boolean jsonPresent;
-
-    @Column(nullable = false, name = "xml")
-    private boolean xmlPresent;
-
-
+    @Column(nullable = false, name = "mxl")
+    private boolean mxlPresent;
 }
