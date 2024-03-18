@@ -1,6 +1,7 @@
 package com.ai.FlatServer.service;
 
-import com.ai.FlatServer.domain.dto.message.RequestMessage;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,15 +9,16 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class JobMessageService {
+public class MessageService {
 
     private final RabbitTemplate rabbitTemplate;
+    private final Gson gson = new Gson();
     @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
 
-    public void sendRequestMessage(RequestMessage messageDto) {
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, messageDto);
+    public void sendMessage(JsonObject jsonObject) {
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, gson.toJson(jsonObject));
     }
 }
