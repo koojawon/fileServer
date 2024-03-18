@@ -12,27 +12,28 @@ public class JsonMessageEncoder {
 
     private Gson gson;
 
-    public String toTargetInfoMessage(String targetId) {
+    public JsonObject toTargetInfoMessage(String targetId, String fileName) {
         JsonObject response = new JsonObject();
         response.addProperty("id", "targetInfo");
         response.addProperty("targetId", targetId);
-        return gson.toJson(response);
+        response.addProperty("fileName", fileName);
+        return response;
     }
 
-    public String toRejectMessage() {
+    public JsonObject toRejectMessage() {
         JsonObject response = new JsonObject();
         response.addProperty("id", "viewerResponse");
         response.addProperty("response", "rejected");
         response.addProperty("message", "No such sender.");
-        return gson.toJson(response);
+        return response;
     }
 
-    public String toViewerResponse(String viewerSdpAnswer) {
+    public JsonObject toViewerResponse(String viewerSdpAnswer) {
         JsonObject response = new JsonObject();
         response.addProperty("id", "viewerResponse");
         response.addProperty("response", "accepted");
         response.addProperty("sdpAnswer", viewerSdpAnswer);
-        return gson.toJson(response);
+        return response;
     }
 
     public JsonObject toPresenterResponse(String presenterSdpAnswer) {
@@ -43,8 +44,8 @@ public class JsonMessageEncoder {
                 .buildAsJsonObj();
     }
 
-    public String toIceCandidateMessage(IceCandidate iceCandidate) {
-        return gson.toJson(toIceCandidateJsonObject(iceCandidate));
+    public JsonObject toIceCandidateMessage(IceCandidate iceCandidate) {
+        return toIceCandidateJsonObject(iceCandidate);
     }
 
     public JsonObject toIceCandidateJsonObject(IceCandidate iceCandidate) {
@@ -54,10 +55,10 @@ public class JsonMessageEncoder {
         return response;
     }
 
-    public String toEndMessage(String id) {
+    public JsonObject toEndMessage(String id) {
         JsonObject response = new JsonObject();
         response.addProperty("id", "stopCommunication");
         response.addProperty("targetId", id);
-        return gson.toJson(response);
+        return response;
     }
 }
