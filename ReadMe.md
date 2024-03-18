@@ -14,3 +14,5 @@
 | GET /files/pdf?fileUID= | Get Specific pdf file   |
 | GET /files/mxl?fileUID  | Get Specific mxl file   |
 
+<h3>HTTPS 연결이 필요합니다!</h3>
+<h4>-> ws://localhost:443/audio</h4>
