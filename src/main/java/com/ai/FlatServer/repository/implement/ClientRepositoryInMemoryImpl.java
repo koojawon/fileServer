@@ -4,26 +4,26 @@ import com.ai.FlatServer.domain.session.UserSession;
 import com.ai.FlatServer.repository.ClientRepository;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.MediaPipeline;
 import org.springframework.stereotype.Repository;
 
+@Slf4j
 @Repository
 public class ClientRepositoryInMemoryImpl implements ClientRepository {
-
-    private final ConcurrentHashMap<String, UserSession> viewerSessions = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, UserSession> presenterSessions = new ConcurrentHashMap<>();
-
     private final ConcurrentHashMap<String, UserSession> userSessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, MediaPipeline> pipelines = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> listenRelations = new ConcurrentHashMap<>();
 
 
+    @Override
     public void setListenRelation(String presenterSessionId, String viewerUuid) {
         if (listenRelations.replace(presenterSessionId, viewerUuid) == null) {
             listenRelations.put(presenterSessionId, viewerUuid);
         }
     }
 
+    @Override
     public void removeListenRelation(String presenterSessionId) {
         listenRelations.remove(presenterSessionId);
     }
@@ -41,7 +41,9 @@ public class ClientRepositoryInMemoryImpl implements ClientRepository {
     @Override
     public void removeUser(String id) {
         if (userSessions.get(id) != null) {
-            userSessions.get(id).getWebRtcEndpoint().release();
+            if (userSessions.get(id).getWebRtcEndpoint() != null) {
+                userSessions.get(id).getWebRtcEndpoint().release();
+            }
             userSessions.remove(id);
             return;
         }
