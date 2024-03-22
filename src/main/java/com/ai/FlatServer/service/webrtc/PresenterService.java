@@ -27,11 +27,12 @@ public class PresenterService {
             throw new IllegalArgumentException("Request does not contains file ID!");
         }
         if (clientRepository.getUser(session.getId()) == null) {
-            clientRepository.putUser(session.getId(), UserSession.builder().session(session).build());
-            log.info("generating new session..." + session.getId());
+            clientRepository.putUser(session.getId(),
+                    UserSession.builder()
+                            .session(session)
+                            .sdpOffer(jsonMessage.get("sdpOffer").getAsString()).build());
+            log.info("generating new session... " + session.getId());
         }
-        UserSession presenterSession = clientRepository.getUser(session.getId());
-        presenterSession.setSdpOffer(jsonMessage.get("sdpOffer").getAsString());
     }
 
     public void stop(WebSocketSession session) {
@@ -61,10 +62,12 @@ public class PresenterService {
             throw new NoSuchElementException("No such presenter exists!");
         }
         presenterSession.setWebRtcEndpoint(createPresenterEndpoint(presenterSession));
+        log.info("presenter initialized");
         return id;
     }
 
     private WebRtcEndpoint createPresenterEndpoint(UserSession session) {
+        log.info("creating presenter endpoint");
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(
                 clientRepository.getMediaPipelineBySessionId(session.getSession().getId()))
                 .useDataChannels()
@@ -85,8 +88,10 @@ public class PresenterService {
 
     public void processOffer(String id) throws IOException {
         UserSession presenterSession = clientRepository.getUser(id);
+        log.info(presenterSession.toString());
         String answer = presenterSession.getWebRtcEndpoint()
                 .processOffer(clientRepository.getUser(id).getSdpOffer());
+        log.info(answer);
         synchronized (presenterSession.getSession()) {
             presenterSession.sendMessage(encoder.toPresenterResponse(answer));
         }

@@ -62,7 +62,7 @@ public class ViewerService {
 
             WebRtcEndpoint viewerWebRtc = createViewerEndpoint(message.getTargetId());
             viewerSession.setWebRtcEndpoint(viewerWebRtc);
-
+            log.info("created new viewer :" + viewerSession.getUuid());
             return viewerSession.getUuid();
         }
     }
@@ -87,6 +87,7 @@ public class ViewerService {
         WebRtcEndpoint viewerEndpoint = viewer.getWebRtcEndpoint();
         String answer = viewerEndpoint.processOffer(viewer.getSdpOffer());
         JsonObject jsonObject = encoder.toViewerResponse(answer);
+        log.info(answer);
         messageService.sendMessage(jsonObject);
     }
 
