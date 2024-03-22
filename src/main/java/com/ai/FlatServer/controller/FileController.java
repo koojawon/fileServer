@@ -83,9 +83,10 @@ public class FileController {
             xmlFileDto = fileService.getMxl(id);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                            .filename(xmlFileDto.getEncodedFileName() + ".mxl")
+                            .filename(xmlFileDto.getEncodedFileName())
                             .build()
                             .toString())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(xmlFileDto.getFile());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(403).build();
