@@ -144,7 +144,6 @@ public class FileService {
             UrlResource urlResource = new UrlResource("file:" + uploadPath + fileInfoDao.getUid() + ".mxl");
             String encodedFileName = UriUtils.encode(subExt(fileInfoDao.getOriginalFileName()) + ".mxl",
                     StandardCharsets.UTF_8);
-
             return FileDto.builder()
                     .file(urlResource)
                     .encodedFileName(encodedFileName)
