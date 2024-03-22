@@ -18,13 +18,14 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Component
 @RequiredArgsConstructor
 public class PresenterController extends TextWebSocketHandler {
-    private PresenterService presenterService;
-    private ViewerService viewerService;
-    private Gson gson;
+    private final PresenterService presenterService;
+    private final ViewerService viewerService;
+    private final Gson gson = new Gson();
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
+        log.info(jsonMessage.toString());
         switch (jsonMessage.get("id").getAsString()) {
             case "presenter":
                 handlePresenterMessage(session, jsonMessage);
