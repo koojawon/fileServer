@@ -28,7 +28,9 @@ public class ViewerController {
 
     @RabbitListener(queues = "pdfJobQueue.senderQueue")
     public void handleMessage(String message) throws IOException {
+        log.info(message);
         JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+
         switch (jsonObject.get("id").getAsString()) {
             case "viewer" -> handleViewerMessage(jsonObject);
             case "onIceCandidate" -> viewerService.onIceCandidate(decoder.toIceCandidateMessage(jsonObject));
@@ -37,20 +39,26 @@ public class ViewerController {
 
 
     private void handleViewerMessage(JsonObject jsonObject) throws IOException {
-        TargetInfoResponseMessage message = decoder.toTargetInfoResponseMessage(jsonObject);
-        String viewerId = viewerService.initViewer(message);
+        try {
 
-        mediaPipelineService.createMediaPipeline(message.getTargetId());
-        mediaPipelineService.enableStatsOfId(message.getTargetId());
-        String presenterId = presenterService.initPresenter(message.getTargetId());
-        mediaPipelineService.connectEach(presenterId, viewerId);
+            TargetInfoResponseMessage message = decoder.toTargetInfoResponseMessage(jsonObject);
+            mediaPipelineService.createMediaPipeline(message.getTargetId());
+            String viewerId = viewerService.initViewer(message);
+            mediaPipelineService.enableStatsOfId(message.getTargetId());
+            String presenterId = presenterService.initPresenter(message.getTargetId());
+            mediaPipelineService.connectEach(presenterId, viewerId);
 
-        presenterService.processOffer(message.getTargetId());
-        viewerService.processOffer(viewerId);
+            presenterService.processOffer(message.getTargetId());
 
-        viewerService.startGathering(viewerId);
-        presenterService.startGathering(presenterId);
+            viewerService.processOffer(viewerId);
 
-        mediaPipelineService.setRelation(presenterId, viewerId);
+            viewerService.startGathering(viewerId);
+            presenterService.startGathering(presenterId);
+
+            mediaPipelineService.setRelation(presenterId, viewerId);
+        } catch (Exception e) {
+            log.error(e.toString());
+        }
+
     }
 }
