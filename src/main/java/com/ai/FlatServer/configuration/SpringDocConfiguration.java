@@ -14,7 +14,7 @@ public class SpringDocConfiguration {
         return new OpenAPI()
                 .info(new Info().title("Flat API")
                         .description("API for Flat dev")
-                        .version("0.0.1")
+                        .version("0.1.1")
                 );
     }
 }
