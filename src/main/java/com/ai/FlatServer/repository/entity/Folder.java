@@ -2,7 +2,6 @@ package com.ai.FlatServer.repository.entity;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 @Builder
 @RequiredArgsConstructor
 @AllArgsConstructor
-
 public class Folder extends BaseEntity {
 
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
@@ -37,8 +35,10 @@ public class Folder extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "parent")
     private final List<Folder> subDirs = new ArrayList<>();
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "parentFolder")
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
+            property = "id")
+    @JsonIdentityReference(alwaysAsId = true)
+    @OneToMany(mappedBy = "parentFolder", fetch = FetchType.LAZY)
     private final List<FileInfo> subFiles = new ArrayList<>();
 
     @Id
