@@ -1,11 +1,13 @@
-package com.ai.FlatServer.domain.dao;
+package com.ai.FlatServer.repository.entity;
 
-import com.ai.FlatServer.repository.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,10 +20,10 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class FileInfoDao extends BaseEntity {
+public class FileInfo extends BaseEntity {
 
     @Id
-    @Column(updatable = false, unique = true, nullable = false)
+    @Column(updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -33,4 +35,16 @@ public class FileInfoDao extends BaseEntity {
 
     @Column(nullable = false, name = "mxl")
     private boolean mxlPresent;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean fav = false;
+
+    @Column(nullable = false)
+    private int iconId;
+
+    @JsonBackReference
+    @ManyToOne
+    @JoinColumn(name = "parent_folder_id")
+    private Folder parentFolder;
 }
