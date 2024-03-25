@@ -81,9 +81,14 @@ public class FileService {
 
         switch (getExt(Objects.requireNonNull(originalFileName))) {
             case "pdf" -> {
-                String uid = savePdf(multipartFile, pdfUploadRequest);
-                sendTransformMessage(uid);
-                return fileInfoRepository.findByUid(uid).orElseThrow(NoSuchElementException::new).getId();
+                try {
+                    String uid = savePdf(multipartFile, pdfUploadRequest);
+                    sendTransformMessage(uid);
+                    return fileInfoRepository.findByUid(uid).orElseThrow(NoSuchElementException::new).getId();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new IOException();
+                }
             }
             case "mxl" -> saveMxl(multipartFile);
             default -> throw new UnsupportedEncodingException();
@@ -120,7 +125,7 @@ public class FileService {
     private void addPdfToParentFolder(Long fileId, FileInfo fileInfo) {
         Folder parent = folderRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
         parent.getSubFiles().add(fileInfo);
-        fileInfo.setParentFolder(parent);
+        fileInfo.setParentFolder(parent.getId());
     }
 
     @Transactional
@@ -193,8 +198,8 @@ public class FileService {
             if (!pdf.delete()) {
                 throw new RuntimeException("삭제 실패");
             }
-            Folder parent = fileInfo.getParentFolder();
-            // folderRepository.findById(fileInfo.getParentFolder()).orElseThrow(NoSuchElementException::new);
+            Folder parent = //fileInfo.getParentFolder();
+                    folderRepository.findById(fileInfo.getParentFolder()).orElseThrow(NoSuchElementException::new);
             parent.getSubFiles().remove(fileInfo);
         }
         if (fileInfo.isMxlPresent()) {
@@ -217,10 +222,10 @@ public class FileService {
         if (patchRequest.getNewFolderId() != null) {
             Folder newParent = folderRepository.findById(patchRequest.getNewFolderId())
                     .orElseThrow(NoSuchElementException::new);
-            Folder oldParent = fileInfo.getParentFolder();
-            //folderRepository.findById(fileInfo.getParentFolder())                    .orElseThrow(NoSuchElementException::new);
+            Folder oldParent = //fileInfo.getParentFolder();
+                    folderRepository.findById(fileInfo.getParentFolder()).orElseThrow(NoSuchElementException::new);
             oldParent.getSubFiles().remove(fileInfo);
-            fileInfo.setParentFolder(newParent);
+            fileInfo.setParentFolder(newParent.getId());
             newParent.getSubFiles().add(fileInfo);
         }
         if (patchRequest.getIsFav() != null) {
