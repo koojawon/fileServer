@@ -21,4 +21,12 @@ public class MessageService {
     public void sendMessage(JsonObject jsonObject) {
         rabbitTemplate.convertAndSend(exchangeName, routingKey, gson.toJson(jsonObject));
     }
+
+    public void sendTransformRequestMessage(String fileUid) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "File");
+        jsonObject.addProperty("fileUid", fileUid);
+
+        sendMessage(jsonObject);
+    }
 }
