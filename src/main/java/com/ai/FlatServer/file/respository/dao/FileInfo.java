@@ -41,6 +41,6 @@ public class FileInfo extends BaseEntity {
     @Column(nullable = false)
     private int iconId;
 
-    @Column(name = "parent_folder_id")
-    private Long parentFolder;
+    @Column(nullable = false)
+    private Long parentFolderId;
 }
