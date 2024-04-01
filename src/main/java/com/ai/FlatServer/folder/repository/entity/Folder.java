@@ -1,10 +1,10 @@
 package com.ai.FlatServer.folder.repository.entity;
 
 import com.ai.FlatServer.repository.entity.BaseEntity;
-import com.ai.FlatServer.file.respository.dao.FileInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -34,14 +34,8 @@ public class Folder extends BaseEntity {
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
             property = "id")
     @JsonIdentityReference(alwaysAsId = true)
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parent")
+    @OneToMany(mappedBy = "parent", cascade = {CascadeType.ALL})
     private final List<Folder> subDirs = new ArrayList<>();
-
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
-            property = "id")
-    @JsonIdentityReference(alwaysAsId = true)
-    @OneToMany(mappedBy = "parentFolder", fetch = FetchType.LAZY)
-    private final List<FileInfo> subFiles = new ArrayList<>();
 
     @Id
     @Column(updatable = false, nullable = false)
