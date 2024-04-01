@@ -1,9 +1,10 @@
 package com.ai.FlatServer.folder.dto.mapper;
 
 import com.ai.FlatServer.file.dto.response.FileNameInfo;
-import com.ai.FlatServer.folder.dto.response.FolderInfo;
 import com.ai.FlatServer.file.respository.dao.FileInfo;
+import com.ai.FlatServer.folder.dto.response.FolderInfo;
 import com.ai.FlatServer.folder.repository.entity.Folder;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -34,12 +35,12 @@ public class FolderMapper {
         return null;
     }
 
-    public static FolderInfo FolderToFolderInfoMapper(Folder folder) {
+    public static FolderInfo FolderToFolderInfoMapper(Folder folder, List<FileInfo> subFiles) {
         FolderInfo folderInfo = FolderToFolderInfo(folder);
         for (Folder f : folder.getSubDirs()) {
             folderInfo.getSubDirs().add(FolderToFolderInfo(f));
         }
-        for (FileInfo f : folder.getSubFiles()) {
+        for (FileInfo f : subFiles) {
             folderInfo.getSubFiles().add(FileInfoToFileNameInfoMapper(f));
         }
         return folderInfo;
