@@ -18,21 +18,26 @@ repositories {
 dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'io.micrometer:micrometer-registry-prometheus:1.12.2'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:3.2.1'
+
+    //prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    //cache
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 
     //kurento
     implementation 'org.kurento:kurento-client:7.0.0'
     implementation 'org.kurento:kurento-utils-js:7.0.0'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket:3.2.1'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
 
     //lombok
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-    testCompileOnly 'org.projectlombok:lombok:1.18.30'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 
     //jpa
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
