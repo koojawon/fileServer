@@ -1,16 +1,15 @@
 package com.ai.FlatServer.file.service;
 
-import com.ai.FlatServer.file.dto.response.FileDto;
-import com.ai.FlatServer.file.dto.response.FileNameInfo;
 import com.ai.FlatServer.file.dto.request.FilePatchRequest;
 import com.ai.FlatServer.file.dto.request.PdfUploadRequest;
-import com.ai.FlatServer.folder.dto.mapper.FolderMapper;
+import com.ai.FlatServer.file.dto.response.FileDto;
+import com.ai.FlatServer.file.dto.response.FileNameInfo;
 import com.ai.FlatServer.file.respository.FileInfoRepository;
-import com.ai.FlatServer.folder.repository.FolderRepository;
 import com.ai.FlatServer.file.respository.dao.FileInfo;
+import com.ai.FlatServer.folder.dto.mapper.FolderMapper;
+import com.ai.FlatServer.folder.repository.FolderRepository;
 import com.ai.FlatServer.folder.repository.entity.Folder;
 import com.ai.FlatServer.rabbitmq.service.MessageService;
-import com.google.gson.JsonObject;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +28,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,13 +43,13 @@ public class FileService {
     private final FileInfoRepository fileInfoRepository;
     private final FolderRepository folderRepository;
     private final MessageService messageService;
+
+    private final CacheManager cacheManager;
     @Value("${linuxUploadPath}")
     private String linuxUploadPath;
-
-    private String uploadPath;
-
     @Value("${windowUploadPath}")
     private String winUploadPath;
+    private String uploadPath;
 
     @PostConstruct
     public void init() {
@@ -83,10 +84,10 @@ public class FileService {
             case "pdf" -> {
                 try {
                     String uid = savePdf(multipartFile, pdfUploadRequest);
-                    sendTransformMessage(uid);
-                    return fileInfoRepository.findByUid(uid).orElseThrow(NoSuchElementException::new).getId();
+                    Long id = fileInfoRepository.findByUid(uid).orElseThrow(NoSuchElementException::new).getId();
+                    messageService.sendTransformRequestMessage(uid);
+                    return id;
                 } catch (Exception e) {
-                    e.printStackTrace();
                     throw new IOException();
                 }
             }
@@ -108,23 +109,15 @@ public class FileService {
                 .uid(fileUid)
                 .mxlPresent(false)
                 .build();
-        addPdfToParentFolder(pdfUploadRequest.getFolderId(), fileInfo);
         fileInfoRepository.save(fileInfo);
+        addPdfToParentFolder(pdfUploadRequest.getFolderId(), fileInfo);
         return fileUid;
     }
 
-    private void sendTransformMessage(String fileUid) {
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("id", "File");
-        jsonObject.addProperty("fileUid", fileUid);
-
-        messageService.sendMessage(jsonObject);
-    }
 
     private void addPdfToParentFolder(Long fileId, FileInfo fileInfo) {
         Folder parent = folderRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
-        parent.getSubFiles().add(fileInfo);
-        fileInfo.setParentFolder(parent.getId());
+        fileInfo.setParentFolderId(parent.getId());
     }
 
     @Transactional
@@ -176,6 +169,7 @@ public class FileService {
         throw new NoSuchElementException();
     }
 
+    @Cacheable(value = "fileCache", key = "'all'")
     public List<FileNameInfo> getFavs() {
         return fileInfoRepository.findAllByFav(true)
                 .stream()
@@ -184,22 +178,19 @@ public class FileService {
     }
 
     @Transactional
-    public void setFav(Long fileId, Boolean isFav) {
-        FileInfo fileInfo = fileInfoRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
-        fileInfo.setFav(isFav);
-    }
-
-    @Transactional
     public void removeFile(Long fileId) {
         FileInfo fileInfo = fileInfoRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
+        if (fileInfo.getFav()) {
+            Objects.requireNonNull(cacheManager.getCache("fileCache")).evict("all");
+        }
         File pdf = new File(fileInfo.getUid() + ".pdf");
         if (pdf.exists()) {
             if (!pdf.delete()) {
                 throw new RuntimeException("삭제 실패");
             }
-            Folder parent = //fileInfo.getParentFolder();
-                    folderRepository.findById(fileInfo.getParentFolder()).orElseThrow(NoSuchElementException::new);
-            parent.getSubFiles().remove(fileInfo);
+            Long parentFolderId = fileInfo.getParentFolderId();
+            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(parentFolderId);
+
         }
         if (fileInfo.isMxlPresent()) {
             File mxl = new File(fileInfo.getUid() + ".mxl");
@@ -215,20 +206,21 @@ public class FileService {
     @Transactional
     public void patchFile(Long fileId, FilePatchRequest patchRequest) {
         FileInfo fileInfo = fileInfoRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
+        Folder parent = folderRepository.findById(fileInfo.getParentFolderId())
+                .orElseThrow(NoSuchElementException::new);
+        Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(parent.getId());
         if (patchRequest.getIconId() != null) {
             fileInfo.setIconId(patchRequest.getIconId());
         }
         if (patchRequest.getNewFolderId() != null) {
             Folder newParent = folderRepository.findById(patchRequest.getNewFolderId())
                     .orElseThrow(NoSuchElementException::new);
-            Folder oldParent = //fileInfo.getParentFolder();
-                    folderRepository.findById(fileInfo.getParentFolder()).orElseThrow(NoSuchElementException::new);
-            oldParent.getSubFiles().remove(fileInfo);
-            fileInfo.setParentFolder(newParent.getId());
-            newParent.getSubFiles().add(fileInfo);
+            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(newParent.getId());
+            fileInfo.setParentFolderId(newParent.getId());
         }
         if (patchRequest.getIsFav() != null) {
             fileInfo.setFav(patchRequest.getIsFav());
+            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict("all");
         }
     }
 
