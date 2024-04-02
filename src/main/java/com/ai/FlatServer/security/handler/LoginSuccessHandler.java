@@ -1,7 +1,7 @@
-package com.ai.FlatServer.handler;
+package com.ai.FlatServer.security.handler;
 
-import com.ai.FlatServer.repository.UserRepository;
-import com.ai.FlatServer.service.JwtService;
+import com.ai.FlatServer.security.service.JwtService;
+import com.ai.FlatServer.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

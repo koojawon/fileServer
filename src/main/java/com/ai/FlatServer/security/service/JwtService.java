@@ -1,6 +1,7 @@
-package com.ai.FlatServer.service;
+package com.ai.FlatServer.security.service;
 
-import com.ai.FlatServer.repository.UserRepository;
+import com.ai.FlatServer.user.repository.UserRepository;
+import com.ai.FlatServer.user.repository.dao.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -8,6 +9,7 @@ import io.jsonwebtoken.security.SignatureException;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
@@ -15,14 +17,12 @@ import java.util.Optional;
 import javax.crypto.SecretKey;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Getter
-@Slf4j
 public class JwtService {
 
     private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
@@ -31,15 +31,15 @@ public class JwtService {
     private static final String BEARER = "Bearer";
     private final UserRepository userRepository;
     @Value("${jwt.secretKey}")
-    private final String secretKey;
+    private String secretKey;
     private SecretKey encodedKey;
-    @Value("{jwt.access.expiration}")
+    @Value("${jwt.access.expiration}")
     private Long accessTokenExpirationPeriod;
-    @Value("{jwt.refresh.expiration}")
+    @Value("${jwt.refresh.expiration}")
     private Long refreshTokenExpirationPeriod;
-    @Value("{jwt.access.header}")
+    @Value("${jwt.access.header}")
     private String accessHeader;
-    @Value("{jwt.refresh.header}")
+    @Value("${jwt.refresh.header}")
     private String refreshHeader;
 
     @PostConstruct
@@ -130,5 +130,13 @@ public class JwtService {
         } catch (SignatureException e) {
             return false;
         }
+    }
+
+    @Transactional
+    public String reIssueRefreshToken(User user) {
+        String refreshToken = createRefreshToken();
+        user.updateRefreshToken(refreshToken);
+        userRepository.save(user);
+        return refreshToken;
     }
 }

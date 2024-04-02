@@ -1,12 +1,12 @@
-package com.ai.FlatServer.configuration;
+package com.ai.FlatServer.security.configuration;
 
-import com.ai.FlatServer.handler.LoginFailureHandler;
-import com.ai.FlatServer.handler.LoginSuccessHandler;
-import com.ai.FlatServer.repository.UserRepository;
 import com.ai.FlatServer.security.filter.CustomJsonUsernamePasswordAuthenticationFilter;
 import com.ai.FlatServer.security.filter.JwtAuthenticationProcessingFilter;
-import com.ai.FlatServer.service.JwtService;
-import com.ai.FlatServer.service.LoginService;
+import com.ai.FlatServer.security.handler.LoginFailureHandler;
+import com.ai.FlatServer.security.handler.LoginSuccessHandler;
+import com.ai.FlatServer.security.service.JwtService;
+import com.ai.FlatServer.security.service.LoginService;
+import com.ai.FlatServer.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -50,6 +50,8 @@ public class SecurityConfiguration {
                             .anyRequest().authenticated();
                 })
                 .addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
+                .addFilterBefore(jwtAuthenticationProcessingFilter(),
+                        CustomJsonUsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

@@ -1,4 +1,4 @@
-package com.ai.FlatServer.domain.dto;
+package com.ai.FlatServer.user.dto;
 
 import lombok.Data;
 

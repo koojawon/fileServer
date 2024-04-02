@@ -1,13 +1,12 @@
 package com.ai.FlatServer.security.filter;
 
-import com.ai.FlatServer.domain.dao.User;
-import com.ai.FlatServer.repository.UserRepository;
-import com.ai.FlatServer.service.JwtService;
+import com.ai.FlatServer.security.service.JwtService;
+import com.ai.FlatServer.user.repository.UserRepository;
+import com.ai.FlatServer.user.repository.dao.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,27 +45,18 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (refreshToken == null) {
-            checkAccessTokenAndAuthenticate(request, response, filterChain);
-        }
+        checkAccessTokenAndAuthenticate(request, response, filterChain);
     }
 
     public void checkRefreshTokenAndReIssueAccessToken(HttpServletResponse response, String refreshToken) {
         userRepository.findByRefreshToken(refreshToken)
                 .ifPresent(user -> {
-                    String reIssuedRefreshToken = reIssueRefreshToken(user);
+                    String reIssuedRefreshToken = jwtService.reIssueRefreshToken(user);
                     jwtService.sendAccessAndRefreshToken(response,
                             jwtService.createAccessToken(user.getEmail()), reIssuedRefreshToken);
                 });
     }
 
-    @Transactional
-    private String reIssueRefreshToken(User user) {
-        String refreshToken = jwtService.createRefreshToken();
-        user.updateRefreshToken(refreshToken);
-        userRepository.save(user);
-        return refreshToken;
-    }
 
     public void checkAccessTokenAndAuthenticate(HttpServletRequest request, HttpServletResponse response,
                                                 FilterChain filterChain) throws ServletException, IOException {
@@ -82,7 +72,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     public void saveAuthentication(User user) {
         String password = user.getPassword();
         if (password == null) {
-            password = "123";
+            password = "emptyPasswordForSocialUser";
         }
 
         UserDetails userDetailsUser = org.springframework.security.core.userdetails.User.builder()

@@ -1,7 +1,7 @@
-package com.ai.FlatServer.repository;
+package com.ai.FlatServer.user.repository;
 
-import com.ai.FlatServer.domain.dao.User;
-import com.ai.FlatServer.enums.SocialType;
+import com.ai.FlatServer.user.enums.SocialType;
+import com.ai.FlatServer.user.repository.dao.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,4 +1,4 @@
-package com.ai.FlatServer.enums;
+package com.ai.FlatServer.user.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

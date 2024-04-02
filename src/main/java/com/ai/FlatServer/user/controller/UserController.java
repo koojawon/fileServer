@@ -1,7 +1,7 @@
-package com.ai.FlatServer.controller;
+package com.ai.FlatServer.user.controller;
 
-import com.ai.FlatServer.domain.dto.UserSignUpDto;
-import com.ai.FlatServer.service.UserService;
+import com.ai.FlatServer.user.dto.UserSignUpDto;
+import com.ai.FlatServer.user.service.UserService;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

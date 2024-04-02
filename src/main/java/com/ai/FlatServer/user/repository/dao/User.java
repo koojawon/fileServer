@@ -1,7 +1,7 @@
-package com.ai.FlatServer.domain.dao;
+package com.ai.FlatServer.user.repository.dao;
 
-import com.ai.FlatServer.enums.Role;
-import com.ai.FlatServer.enums.SocialType;
+import com.ai.FlatServer.user.enums.Role;
+import com.ai.FlatServer.user.enums.SocialType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

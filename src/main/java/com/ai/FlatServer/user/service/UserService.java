@@ -1,9 +1,9 @@
-package com.ai.FlatServer.service;
+package com.ai.FlatServer.user.service;
 
-import com.ai.FlatServer.domain.dao.User;
-import com.ai.FlatServer.domain.dto.UserSignUpDto;
-import com.ai.FlatServer.enums.Role;
-import com.ai.FlatServer.repository.UserRepository;
+import com.ai.FlatServer.user.dto.UserSignUpDto;
+import com.ai.FlatServer.user.enums.Role;
+import com.ai.FlatServer.user.repository.UserRepository;
+import com.ai.FlatServer.user.repository.dao.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

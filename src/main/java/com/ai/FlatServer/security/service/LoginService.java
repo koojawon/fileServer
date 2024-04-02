@@ -1,7 +1,8 @@
-package com.ai.FlatServer.service;
+package com.ai.FlatServer.security.service;
 
-import com.ai.FlatServer.domain.dao.User;
-import com.ai.FlatServer.repository.UserRepository;
+
+import com.ai.FlatServer.user.repository.UserRepository;
+import com.ai.FlatServer.user.repository.dao.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
