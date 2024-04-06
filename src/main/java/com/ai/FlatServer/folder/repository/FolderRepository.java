@@ -13,4 +13,5 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
     @Modifying
     @Query("delete from Folder f where f.id in :ids")
     void deleteAllByIds(List<Long> ids);
+
 }

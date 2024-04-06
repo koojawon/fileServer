@@ -49,4 +49,16 @@ public class UserService {
         UserDetails principal = (UserDetails) sc.getAuthentication().getPrincipal();
         return userRepository.findByEmail(principal.getUsername()).orElseThrow(NoSuchElementException::new);
     }
+
+    public boolean checkCreateAvailability(User user) {
+        return user.getFolderCount() > 0;
+    }
+
+    public void decreaseFolderCount(User user) {
+        user.setFolderCount(user.getFolderCount() - 1);
+    }
+
+    public void increaseFolderCount(User currentUser) {
+        currentUser.setFolderCount(currentUser.getFolderCount() + 1);
+    }
 }

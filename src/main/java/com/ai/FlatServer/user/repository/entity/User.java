@@ -36,7 +36,6 @@ public class User {
     private String email;
     private String password;
     private String nickname;
-    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -47,6 +46,8 @@ public class User {
     private String socialId;
 
     private String refreshToken;
+
+    private Integer folderCount;
 
     @OneToOne
     private Folder userRootFolder;

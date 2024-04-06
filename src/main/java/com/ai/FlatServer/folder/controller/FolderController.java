@@ -1,11 +1,12 @@
 package com.ai.FlatServer.folder.controller;
 
-import com.ai.FlatServer.folder.dto.response.FolderInfo;
 import com.ai.FlatServer.folder.dto.request.FolderCreationRequest;
 import com.ai.FlatServer.folder.dto.request.FolderPatchRequest;
+import com.ai.FlatServer.folder.dto.response.FolderInfo;
 import com.ai.FlatServer.folder.service.FolderService;
+import com.ai.FlatServer.user.repository.entity.User;
+import com.ai.FlatServer.user.service.UserService;
 import java.net.URI;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,57 +24,38 @@ import org.springframework.web.bind.annotation.RestController;
 public class FolderController {
 
     private final FolderService folderService;
+    private final UserService userService;
 
     @GetMapping("/{folderId}")
     public ResponseEntity<FolderInfo> getFolder(@PathVariable Long folderId) {
-        try {
-            FolderInfo folderResult = folderService.getFolderWithId(folderId);
-            return ResponseEntity.ok(folderResult);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        FolderInfo folderResult = folderService.getFolderWithId(folderId);
+        return ResponseEntity.ok(folderResult);
     }
 
 
     @PostMapping
     public ResponseEntity<Boolean> createFolder(@RequestBody FolderCreationRequest folderCreationRequest) {
-        try {
-            folderService.createFolderAt(folderCreationRequest.getFolderName(),
-                    folderCreationRequest.getCurrentFolderId());
-            return ResponseEntity.created(URI.create("")).build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError().build();
+        User user = userService.getCurrentUser();
+        if (userService.checkCreateAvailability(user)) {
+            folderService.createFolder(folderCreationRequest.getFolderName(),
+                    folderCreationRequest.getCurrentFolderId(), user);
+            userService.decreaseFolderCount(user);
         }
+        return ResponseEntity.created(URI.create("")).build();
     }
 
     @DeleteMapping("/{targetFolderId}")
     public ResponseEntity<Boolean> deleteFolder(@PathVariable Long targetFolderId) {
-        try {
-            folderService.deleteFolder(targetFolderId);
-            return ResponseEntity.ok().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError().build();
-        }
-
+        folderService.deleteFolder(targetFolderId);
+        userService.increaseFolderCount(userService.getCurrentUser());
+        return ResponseEntity.ok().build();
     }
 
 
     @PatchMapping("/{targetFolderId}")
     public ResponseEntity<Boolean> changeName(@PathVariable Long targetFolderId,
                                               @RequestBody FolderPatchRequest folderPatchRequest) {
-        try {
-            folderService.patchUpdate(folderPatchRequest, targetFolderId);
-            return ResponseEntity.ok().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        folderService.patchUpdate(folderPatchRequest, targetFolderId);
+        return ResponseEntity.ok().build();
     }
 }

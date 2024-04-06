@@ -54,9 +54,13 @@ public class FolderService {
 
     @Transactional
     @CacheEvict(value = "folderCache", key = "#currentFolderId")
-    public void createFolderAt(String folderName, Long currentFolderId) {
+    public void createFolder(String folderName, Long currentFolderId, User user) {
         Folder surFolder = folderRepository.findById(currentFolderId).orElseThrow(NoSuchElementException::new);
-        Folder folder = Folder.builder().folderName(folderName).parent(surFolder).type(FolderType.LEAF)
+        Folder folder = Folder.builder()
+                .folderName(folderName)
+                .parent(surFolder)
+                .type(FolderType.LEAF)
+                .owner(user)
                 .build();
         surFolder.getSubDirs().add(folder);
         folderRepository.save(folder);
@@ -75,6 +79,8 @@ public class FolderService {
         Folder folder = folderRepository.findById(targetFolderId).orElseThrow(NoSuchElementException::new);
 
         List<Long> folderIds = searchSubFolderIds(folder);
+        List<FileInfo> files = fileInfoRepository.selectAllByParentFolderId(folderIds);
+
         fileInfoRepository.deleteAllByParentFolderId(folderIds);
         folderRepository.deleteAllByIds(folderIds);
 
