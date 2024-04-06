@@ -1,7 +1,7 @@
 package com.ai.FlatServer.security.service;
 
 import com.ai.FlatServer.user.repository.UserRepository;
-import com.ai.FlatServer.user.repository.dao.User;
+import com.ai.FlatServer.user.repository.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

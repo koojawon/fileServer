@@ -1,6 +1,6 @@
 package com.ai.FlatServer.security.configuration;
 
-import com.ai.FlatServer.security.filter.CustomJsonUsernamePasswordAuthenticationFilter;
+import com.ai.FlatServer.security.filter.JsonUsernamePasswordAuthenticationFilter;
 import com.ai.FlatServer.security.filter.JwtAuthenticationProcessingFilter;
 import com.ai.FlatServer.security.handler.LoginFailureHandler;
 import com.ai.FlatServer.security.handler.LoginSuccessHandler;
@@ -46,12 +46,12 @@ public class SecurityConfiguration {
                         conf -> conf.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(conf -> {
-                    conf.requestMatchers("/", "/sign-up").permitAll()
+                    conf.requestMatchers("/", "/user").permitAll()
                             .anyRequest().authenticated();
                 })
-                .addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
+                .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
                 .addFilterBefore(jwtAuthenticationProcessingFilter(),
-                        CustomJsonUsernamePasswordAuthenticationFilter.class)
+                        JsonUsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
@@ -79,13 +79,13 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public CustomJsonUsernamePasswordAuthenticationFilter customJsonUsernamePasswordAuthenticationFilter() {
-        CustomJsonUsernamePasswordAuthenticationFilter customJsonUsernamePasswordAuthenticationFilter = new CustomJsonUsernamePasswordAuthenticationFilter(
+    public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() {
+        JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter = new JsonUsernamePasswordAuthenticationFilter(
                 objectMapper);
-        customJsonUsernamePasswordAuthenticationFilter.setAuthenticationManager(authenticationManager());
-        customJsonUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
-        customJsonUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
-        return customJsonUsernamePasswordAuthenticationFilter;
+        jsonUsernamePasswordAuthenticationFilter.setAuthenticationManager(authenticationManager());
+        jsonUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
+        jsonUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
+        return jsonUsernamePasswordAuthenticationFilter;
     }
 
     @Bean

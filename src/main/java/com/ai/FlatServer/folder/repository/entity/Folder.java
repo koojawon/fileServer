@@ -1,12 +1,15 @@
 package com.ai.FlatServer.folder.repository.entity;
 
+import com.ai.FlatServer.folder.enums.FolderType;
 import com.ai.FlatServer.repository.entity.BaseEntity;
+import com.ai.FlatServer.user.repository.entity.User;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -34,7 +38,7 @@ public class Folder extends BaseEntity {
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
             property = "id")
     @JsonIdentityReference(alwaysAsId = true)
-    @OneToMany(mappedBy = "parent", cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "parent")
     private final List<Folder> subDirs = new ArrayList<>();
 
     @Id
@@ -51,4 +55,10 @@ public class Folder extends BaseEntity {
             property = "id")
     @JsonIdentityReference(alwaysAsId = true)
     private Folder parent;
+
+    @Enumerated(EnumType.STRING)
+    private FolderType type;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    private User owner;
 }

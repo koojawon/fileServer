@@ -1,5 +1,6 @@
-package com.ai.FlatServer.user.repository.dao;
+package com.ai.FlatServer.user.repository.entity;
 
+import com.ai.FlatServer.folder.repository.entity.Folder;
 import com.ai.FlatServer.user.enums.Role;
 import com.ai.FlatServer.user.enums.SocialType;
 import jakarta.persistence.Column;
@@ -9,11 +10,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -22,7 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Builder
 @Table(name = "Users")
 @AllArgsConstructor
-@Getter
+@Data
 public class User {
 
     @Id
@@ -30,6 +32,7 @@ public class User {
     @Column(name = "user_id")
     private Long id;
 
+    @Column(unique = true)
     private String email;
     private String password;
     private String nickname;
@@ -44,6 +47,9 @@ public class User {
     private String socialId;
 
     private String refreshToken;
+
+    @OneToOne
+    private Folder userRootFolder;
 
     public void authorizeUser() {
         this.role = Role.USER;

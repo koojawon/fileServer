@@ -5,8 +5,10 @@ import com.ai.FlatServer.file.respository.dao.FileInfo;
 import com.ai.FlatServer.folder.dto.mapper.FolderMapper;
 import com.ai.FlatServer.folder.dto.request.FolderPatchRequest;
 import com.ai.FlatServer.folder.dto.response.FolderInfo;
+import com.ai.FlatServer.folder.enums.FolderType;
 import com.ai.FlatServer.folder.repository.FolderRepository;
 import com.ai.FlatServer.folder.repository.entity.Folder;
+import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
@@ -54,8 +56,16 @@ public class FolderService {
     @CacheEvict(value = "folderCache", key = "#currentFolderId")
     public void createFolderAt(String folderName, Long currentFolderId) {
         Folder surFolder = folderRepository.findById(currentFolderId).orElseThrow(NoSuchElementException::new);
-        Folder folder = Folder.builder().folderName(folderName).parent(surFolder).build();
+        Folder folder = Folder.builder().folderName(folderName).parent(surFolder).type(FolderType.LEAF)
+                .build();
         surFolder.getSubDirs().add(folder);
+        folderRepository.save(folder);
+    }
+
+    @Transactional
+    public void createRootFolderFor(User user) {
+        Folder folder = Folder.builder().folderName("root").type(FolderType.ROOT).build();
+        user.setUserRootFolder(folder);
         folderRepository.save(folder);
     }
 

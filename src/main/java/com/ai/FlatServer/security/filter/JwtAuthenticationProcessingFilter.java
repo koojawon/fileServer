@@ -2,7 +2,7 @@ package com.ai.FlatServer.security.filter;
 
 import com.ai.FlatServer.security.service.JwtService;
 import com.ai.FlatServer.user.repository.UserRepository;
-import com.ai.FlatServer.user.repository.dao.User;
+import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -72,7 +72,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     public void saveAuthentication(User user) {
         String password = user.getPassword();
         if (password == null) {
-            password = "emptyPasswordForSocialUser";
+            password = "tempPasswordForSocialUser";
         }
 
         UserDetails userDetailsUser = org.springframework.security.core.userdetails.User.builder()
