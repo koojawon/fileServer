@@ -28,6 +28,7 @@ public class FolderController {
 
     @GetMapping("/{folderId}")
     public ResponseEntity<FolderInfo> getFolder(@PathVariable Long folderId) {
+        User user = userService.getCurrentUser();
         FolderInfo folderResult = folderService.getFolderWithId(folderId);
         return ResponseEntity.ok(folderResult);
     }
@@ -36,10 +37,10 @@ public class FolderController {
     @PostMapping
     public ResponseEntity<Boolean> createFolder(@RequestBody FolderCreationRequest folderCreationRequest) {
         User user = userService.getCurrentUser();
-        if (userService.checkCreateAvailability(user)) {
+        if (userService.checkCreateAvailability()) {
             folderService.createFolder(folderCreationRequest.getFolderName(),
                     folderCreationRequest.getCurrentFolderId(), user);
-            userService.decreaseFolderCount(user);
+            userService.decreaseFolderCount();
         }
         return ResponseEntity.created(URI.create("")).build();
     }
@@ -47,7 +48,7 @@ public class FolderController {
     @DeleteMapping("/{targetFolderId}")
     public ResponseEntity<Boolean> deleteFolder(@PathVariable Long targetFolderId) {
         folderService.deleteFolder(targetFolderId);
-        userService.increaseFolderCount(userService.getCurrentUser());
+        userService.increaseFolderCount();
         return ResponseEntity.ok().build();
     }
 
