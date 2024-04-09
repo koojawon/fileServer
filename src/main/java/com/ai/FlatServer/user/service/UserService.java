@@ -1,14 +1,15 @@
 package com.ai.FlatServer.user.service;
 
-import com.ai.FlatServer.folder.service.FolderService;
+import com.ai.FlatServer.exceptions.FlatErrorCode;
+import com.ai.FlatServer.exceptions.FlatException;
+import com.ai.FlatServer.file.respository.dao.FileInfo;
 import com.ai.FlatServer.user.dto.UserEmailDupCheckDto;
 import com.ai.FlatServer.user.dto.UserSignUpDto;
-import com.ai.FlatServer.user.enums.Role;
 import com.ai.FlatServer.user.repository.UserRepository;
 import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.transaction.Transactional;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,22 +23,20 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final FolderService folderService;
 
-    public void signUp(UserSignUpDto userSignUpDto) throws Exception {
+    public User signUp(UserSignUpDto userSignUpDto) {
         if (userRepository.findByEmail(userSignUpDto.getEmail()).isPresent()) {
-            throw new Exception("이미 존재하는 이메일");
+            throw new FlatException(FlatErrorCode.DUPLICATED_EMAIL);
         }
         User user = User.builder()
                 .email(userSignUpDto.getEmail())
                 .nickname(userSignUpDto.getNickname())
                 .password(userSignUpDto.getPassword())
-                .role(Role.USER)
                 .build();
-
+        user.authorizeUser();
         user.passwordEncode(passwordEncoder);
-        folderService.createRootFolderFor(user);
         userRepository.save(user);
+        return user;
     }
 
     public boolean checkEmailDup(UserEmailDupCheckDto userEmailDupCheckDto) {
@@ -46,19 +45,34 @@ public class UserService {
 
     public User getCurrentUser() {
         SecurityContext sc = SecurityContextHolder.getContext();
-        UserDetails principal = (UserDetails) sc.getAuthentication().getPrincipal();
-        return userRepository.findByEmail(principal.getUsername()).orElseThrow(NoSuchElementException::new);
+        Authentication auth = sc.getAuthentication();
+        if (!auth.isAuthenticated()) {
+            throw new FlatException(FlatErrorCode.NO_AUTHORITY);
+        }
+        UserDetails principal = (UserDetails) auth.getPrincipal();
+        return userRepository.findByEmail(principal.getUsername()).orElseThrow();
     }
 
-    public boolean checkCreateAvailability(User user) {
+    public boolean checkCreateAvailability() {
+        User user = getCurrentUser();
         return user.getFolderCount() > 0;
     }
 
-    public void decreaseFolderCount(User user) {
+    public void decreaseFolderCount() {
+        User user = getCurrentUser();
         user.setFolderCount(user.getFolderCount() - 1);
     }
 
-    public void increaseFolderCount(User currentUser) {
+    public void increaseFolderCount() {
+        User currentUser = getCurrentUser();
+
         currentUser.setFolderCount(currentUser.getFolderCount() + 1);
+    }
+
+    public void checkFileAuthority(FileInfo fileInfo) {
+        User user = getCurrentUser();
+        if (!fileInfo.getOwner().equals(user)) {
+            throw new FlatException(FlatErrorCode.NO_AUTHORITY);
+        }
     }
 }
