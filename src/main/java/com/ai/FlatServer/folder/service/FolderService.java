@@ -1,5 +1,7 @@
 package com.ai.FlatServer.folder.service;
 
+import com.ai.FlatServer.exceptions.FlatErrorCode;
+import com.ai.FlatServer.exceptions.FlatException;
 import com.ai.FlatServer.file.respository.FileInfoRepository;
 import com.ai.FlatServer.file.respository.dao.FileInfo;
 import com.ai.FlatServer.folder.dto.mapper.FolderMapper;
@@ -8,13 +10,13 @@ import com.ai.FlatServer.folder.dto.response.FolderInfo;
 import com.ai.FlatServer.folder.enums.FolderType;
 import com.ai.FlatServer.folder.repository.FolderRepository;
 import com.ai.FlatServer.folder.repository.entity.Folder;
+import com.ai.FlatServer.user.enums.Role;
 import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Queue;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +40,8 @@ public class FolderService {
     @Transactional
     public void init() {
         try {
-            folderRepository.findById(0L).orElseThrow(NoSuchElementException::new);
-        } catch (NoSuchElementException e) {
+            folderRepository.findById(1L).orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
+        } catch (FlatException e) {
             Folder folder = Folder.builder().parent(null).folderName("root").build();
             folderRepository.save(folder);
         }
@@ -47,7 +49,9 @@ public class FolderService {
 
     @Cacheable(value = "folderCache", key = "#folderId")
     public FolderInfo getFolderWithId(Long folderId) {
-        Folder folder = folderRepository.findById(folderId).orElseThrow(NoSuchElementException::new);
+
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
         List<FileInfo> folderInfos = fileInfoRepository.findAllByParentFolderId(folder.getId());
         return FolderMapper.FolderToFolderInfoMapper(folder, folderInfos);
     }
@@ -55,7 +59,8 @@ public class FolderService {
     @Transactional
     @CacheEvict(value = "folderCache", key = "#currentFolderId")
     public void createFolder(String folderName, Long currentFolderId, User user) {
-        Folder surFolder = folderRepository.findById(currentFolderId).orElseThrow(NoSuchElementException::new);
+        Folder surFolder = folderRepository.findById(currentFolderId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
         Folder folder = Folder.builder()
                 .folderName(folderName)
                 .parent(surFolder)
@@ -76,10 +81,10 @@ public class FolderService {
     @Transactional
     @CacheEvict(value = "fileCache", key = "'all'")
     public void deleteFolder(Long targetFolderId) {
-        Folder folder = folderRepository.findById(targetFolderId).orElseThrow(NoSuchElementException::new);
+        Folder folder = folderRepository.findById(targetFolderId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
 
         List<Long> folderIds = searchSubFolderIds(folder);
-        List<FileInfo> files = fileInfoRepository.selectAllByParentFolderId(folderIds);
 
         fileInfoRepository.deleteAllByParentFolderId(folderIds);
         folderRepository.deleteAllByIds(folderIds);
@@ -91,23 +96,24 @@ public class FolderService {
     }
 
     private List<Long> searchSubFolderIds(Folder folder) {
-        List<Long> rval = new ArrayList<>();
+        List<Long> files = new ArrayList<>();
         Queue<Folder> q = new LinkedList<>(folder.getSubDirs());
         while (!q.isEmpty()) {
             Folder cur = q.poll();
-            rval.add(cur.getId());
+            files.add(cur.getId());
             for (Folder f : cur.getSubDirs()) {
                 q.offer(f);
             }
         }
-        rval.add(folder.getId());
-        return rval;
+        files.add(folder.getId());
+        return files;
     }
 
     @Transactional
     @CacheEvict(value = "folderCache", key = "#targetFolderId")
     public void patchUpdate(FolderPatchRequest folderPatchRequest, Long targetFolderId) {
-        Folder folder = folderRepository.findById(targetFolderId).orElseThrow(NoSuchElementException::new);
+        Folder folder = folderRepository.findById(targetFolderId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
         Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(folder.getParent().getId());
         if (folderPatchRequest.getNewName() != null) {
             folder.setFolderName(folderPatchRequest.getNewName());
@@ -115,10 +121,19 @@ public class FolderService {
         if (folderPatchRequest.getNewParent() != null) {
             folder.getParent().getSubDirs().remove(folder);
             Folder newParent = folderRepository.findById(folderPatchRequest.getNewParent())
-                    .orElseThrow(NoSuchElementException::new);
+                    .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
             Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(newParent.getId());
             folder.setParent(newParent);
             newParent.getSubDirs().add(folder);
+        }
+    }
+
+
+    public void checkFolderAuthority(User user, Long folderId) {
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
+        if (folder.getOwner() == null || (!user.equals(folder.getOwner()) && !user.getRole().equals(Role.ADMIN))) {
+            throw new FlatException(FlatErrorCode.NO_AUTHORITY);
         }
     }
 }
