@@ -1,5 +1,7 @@
 package com.ai.FlatServer.file.service;
 
+import com.ai.FlatServer.exceptions.FlatErrorCode;
+import com.ai.FlatServer.exceptions.FlatException;
 import com.ai.FlatServer.file.dto.request.FilePatchRequest;
 import com.ai.FlatServer.file.dto.request.PdfUploadRequest;
 import com.ai.FlatServer.file.dto.response.FileDto;
@@ -9,20 +11,19 @@ import com.ai.FlatServer.file.respository.dao.FileInfo;
 import com.ai.FlatServer.folder.dto.mapper.FolderMapper;
 import com.ai.FlatServer.folder.repository.FolderRepository;
 import com.ai.FlatServer.folder.repository.entity.Folder;
-import com.ai.FlatServer.rabbitmq.service.MessageService;
+import com.ai.FlatServer.user.enums.Role;
+import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -40,16 +41,14 @@ import org.springframework.web.util.UriUtils;
 @RequiredArgsConstructor
 public class FileService {
 
+    public static String uploadPath;
     private final FileInfoRepository fileInfoRepository;
     private final FolderRepository folderRepository;
-    private final MessageService messageService;
-
     private final CacheManager cacheManager;
     @Value("${linuxUploadPath}")
     private String linuxUploadPath;
     @Value("${windowUploadPath}")
     private String winUploadPath;
-    private String uploadPath;
 
     @PostConstruct
     public void init() {
@@ -63,7 +62,6 @@ public class FileService {
         java.io.File file = new java.io.File(uploadPath.substring(0, uploadPath.length() - 1));
         if (!file.exists()) {
             if (file.mkdirs()) {
-
                 if (osName.contains("linux") && !(file.setExecutable(true)
                         && file.setReadable(true) && file.setWritable(true))) {
                     log.error("Directory Authority Set Failed!!");
@@ -76,33 +74,17 @@ public class FileService {
         }
     }
 
-    public Long saveFile(@NotNull MultipartFile multipartFile, PdfUploadRequest pdfUploadRequest) throws IOException {
-        String originalFileName = multipartFile.getOriginalFilename();
-        log.info("received file : " + originalFileName);
-
-        switch (getExt(Objects.requireNonNull(originalFileName))) {
-            case "pdf" -> {
-                try {
-                    String uid = savePdf(multipartFile, pdfUploadRequest);
-                    Long id = fileInfoRepository.findByUid(uid).orElseThrow(NoSuchElementException::new).getId();
-                    messageService.sendTransformRequestMessage(uid);
-                    return id;
-                } catch (Exception e) {
-                    throw new IOException();
-                }
-            }
-            case "mxl" -> saveMxl(multipartFile);
-            default -> throw new UnsupportedEncodingException();
-        }
-        return -1L;
-    }
-
     @Transactional
-    private String savePdf(@NotNull MultipartFile multipartFile, PdfUploadRequest pdfUploadRequest) throws IOException {
+    public String savePdf(@NotNull MultipartFile multipartFile, PdfUploadRequest pdfUploadRequest) throws IOException {
         String originalFileName = Normalizer.normalize(Objects.requireNonNull(multipartFile.getOriginalFilename()),
                 Form.NFC);
         String fileUid = UUID.randomUUID().toString();
         String ext = getExt(Objects.requireNonNull(originalFileName));
+
+        if (!ext.equals("pdf")) {
+            throw new FlatException(FlatErrorCode.UNSUPPORTED_EXTENSION);
+        }
+
         multipartFile.transferTo(new java.io.File(getFullPath(fileUid + "." + ext)));
         FileInfo fileInfo = FileInfo.builder()
                 .originalFileName(originalFileName)
@@ -116,17 +98,24 @@ public class FileService {
 
 
     private void addPdfToParentFolder(Long fileId, FileInfo fileInfo) {
-        Folder parent = folderRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
+        Folder parent = folderRepository.findById(fileId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
         fileInfo.setParentFolderId(parent.getId());
     }
 
     @Transactional
-    private void saveMxl(@NotNull MultipartFile multipartFile) throws IOException {
+    public void saveMxl(@NotNull MultipartFile multipartFile) throws IOException {
         String originalFileName = multipartFile.getOriginalFilename();
+        String ext = getExt(Objects.requireNonNull(originalFileName));
+        if (!ext.equals("mxl")) {
+            throw new FlatException(FlatErrorCode.UNSUPPORTED_EXTENSION);
+        }
+
         multipartFile.transferTo(new java.io.File(getFullPath(originalFileName)));
+
         FileInfo fileInfo = fileInfoRepository.findByUid(
                         Objects.requireNonNull(originalFileName).substring(0, originalFileName.lastIndexOf(".")))
-                .orElseThrow(NoSuchElementException::new);
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
         fileInfo.setMxlPresent(true);
     }
 
@@ -142,8 +131,12 @@ public class FileService {
         return uploadPath + fileName;
     }
 
-    public FileDto getPdf(String fileId) throws MalformedURLException {
-        FileInfo fileInfo = fileInfoRepository.findByUid(fileId).orElseThrow(NoSuchElementException::new);
+    public FileInfo getPdf(String fileUid) throws MalformedURLException {
+        return fileInfoRepository.findByUid(fileUid)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_UID));
+    }
+
+    public FileDto encodePdf(FileInfo fileInfo) throws MalformedURLException {
         UrlResource urlResource = new UrlResource("file:" + uploadPath + fileInfo.getUid() + ".pdf");
         String encodedFileName = UriUtils.encode(fileInfo.getUid(), StandardCharsets.UTF_8);
         return FileDto.builder()
@@ -155,7 +148,7 @@ public class FileService {
     public FileDto getMxl(Long id) throws MalformedURLException {
         FileInfo fileInfo = fileInfoRepository
                 .findById(id)
-                .orElseThrow(NoSuchElementException::new);
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
 
         if (fileInfo.isMxlPresent()) {
             UrlResource urlResource = new UrlResource("file:" + uploadPath + fileInfo.getUid() + ".mxl");
@@ -166,12 +159,12 @@ public class FileService {
                     .encodedFileName(encodedFileName)
                     .build();
         }
-        throw new NoSuchElementException();
+        throw new FlatException(FlatErrorCode.MXL_NOT_READY);
     }
 
-    @Cacheable(value = "fileCache", key = "'all'")
-    public List<FileNameInfo> getFavs() {
-        return fileInfoRepository.findAllByFav(true)
+    @Cacheable(value = "fileCache", key = "'fav' + #user.getId()")
+    public List<FileNameInfo> getFavs(User user) {
+        return fileInfoRepository.findAllByFavAndOwner(true, user)
                 .stream()
                 .map(FolderMapper::FileInfoToFileNameInfoMapper)
                 .toList();
@@ -179,7 +172,8 @@ public class FileService {
 
     @Transactional
     public void removeFile(Long fileId) {
-        FileInfo fileInfo = fileInfoRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
+        FileInfo fileInfo = fileInfoRepository.findById(fileId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
         if (fileInfo.getFav()) {
             Objects.requireNonNull(cacheManager.getCache("fileCache")).evict("all");
         }
@@ -205,16 +199,17 @@ public class FileService {
 
     @Transactional
     public void patchFile(Long fileId, FilePatchRequest patchRequest) {
-        FileInfo fileInfo = fileInfoRepository.findById(fileId).orElseThrow(NoSuchElementException::new);
+        FileInfo fileInfo = fileInfoRepository.findById(fileId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
         Folder parent = folderRepository.findById(fileInfo.getParentFolderId())
-                .orElseThrow(NoSuchElementException::new);
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
         Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(parent.getId());
         if (patchRequest.getIconId() != null) {
             fileInfo.setIconId(patchRequest.getIconId());
         }
         if (patchRequest.getNewFolderId() != null) {
             Folder newParent = folderRepository.findById(patchRequest.getNewFolderId())
-                    .orElseThrow(NoSuchElementException::new);
+                    .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
             Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(newParent.getId());
             fileInfo.setParentFolderId(newParent.getId());
         }
@@ -230,5 +225,14 @@ public class FileService {
             fileList.add(FolderMapper.FileInfoToFileNameInfoMapper(f));
         }
         return fileList;
+    }
+
+
+    public void checkFileAuthority(User user, Long targetFileId) {
+        FileInfo fileInfo = fileInfoRepository.findById(targetFileId)
+                .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
+        if (fileInfo.getOwner() == null || (!fileInfo.getOwner().equals(user) && !user.getRole().equals(Role.ADMIN))) {
+            throw new FlatException(FlatErrorCode.NO_AUTHORITY);
+        }
     }
 }
