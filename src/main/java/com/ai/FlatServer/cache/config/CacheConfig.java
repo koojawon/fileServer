@@ -12,8 +12,8 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager("folderCache", "fileCache");
-        cacheManager.setAllowNullValues(true);
+        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager("folderCache", "userCache", "fileCache");
+        cacheManager.setAllowNullValues(false);
         return cacheManager;
     }
 }
