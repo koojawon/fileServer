@@ -1,11 +1,13 @@
 package com.ai.FlatServer.file.respository.dao;
 
 import com.ai.FlatServer.repository.entity.BaseEntity;
+import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,4 +45,7 @@ public class FileInfo extends BaseEntity {
 
     @Column(nullable = false)
     private Long parentFolderId;
+
+    @OneToOne
+    private User owner;
 }
