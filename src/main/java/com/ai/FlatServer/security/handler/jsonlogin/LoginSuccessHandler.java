@@ -1,4 +1,4 @@
-package com.ai.FlatServer.security.handler;
+package com.ai.FlatServer.security.handler.jsonlogin;
 
 import com.ai.FlatServer.security.service.JwtService;
 import com.ai.FlatServer.user.repository.UserRepository;

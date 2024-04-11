@@ -1,4 +1,4 @@
-package com.ai.FlatServer.security.handler;
+package com.ai.FlatServer.security.handler.jsonlogin;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
