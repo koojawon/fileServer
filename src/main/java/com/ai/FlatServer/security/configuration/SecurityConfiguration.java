@@ -2,8 +2,11 @@ package com.ai.FlatServer.security.configuration;
 
 import com.ai.FlatServer.security.filter.JsonUsernamePasswordAuthenticationFilter;
 import com.ai.FlatServer.security.filter.JwtAuthenticationProcessingFilter;
-import com.ai.FlatServer.security.handler.LoginFailureHandler;
-import com.ai.FlatServer.security.handler.LoginSuccessHandler;
+import com.ai.FlatServer.security.handler.jsonlogin.LoginFailureHandler;
+import com.ai.FlatServer.security.handler.jsonlogin.LoginSuccessHandler;
+import com.ai.FlatServer.security.handler.oauth2.OAuth2FailureHandler;
+import com.ai.FlatServer.security.handler.oauth2.OAuth2SuccessHandler;
+import com.ai.FlatServer.security.service.CustomOAuth2UserService;
 import com.ai.FlatServer.security.service.JwtService;
 import com.ai.FlatServer.security.service.LoginService;
 import com.ai.FlatServer.user.repository.UserRepository;
@@ -33,6 +36,9 @@ public class SecurityConfiguration {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -49,6 +55,12 @@ public class SecurityConfiguration {
                     conf.requestMatchers("/", "/user").permitAll()
                             .anyRequest().authenticated();
                 })
+//                .oauth2Login(oauth2Login ->
+//                        oauth2Login.userInfoEndpoint(
+//                                        userInfoEndpointConfig -> userInfoEndpointConfig.userService(customOAuth2UserService))
+//                                .successHandler(oAuth2SuccessHandler)
+//                                .failureHandler(oAuth2FailureHandler)
+//                                .clientRegistrationRepository())
                 .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
                 .addFilterBefore(jwtAuthenticationProcessingFilter(),
                         JsonUsernamePasswordAuthenticationFilter.class)
