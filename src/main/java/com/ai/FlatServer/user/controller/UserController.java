@@ -26,15 +26,12 @@ public class UserController {
     public ResponseEntity<String> signUp(@RequestBody UserSignUpDto userSignUpDto) {
         User user = userService.signUp(userSignUpDto);
         folderService.createRootFolderFor(user);
-
         return ResponseEntity.created(URI.create("")).build();
     }
 
     @PostMapping("/emailCheck")
     public ResponseEntity<Boolean> checkEmailDup(@RequestBody UserEmailDupCheckDto userEmailDupCheckDto) {
-        if (userService.checkEmailDup(userEmailDupCheckDto)) {
-            return ResponseEntity.badRequest().build();
-        }
+        userService.checkEmailDup(userEmailDupCheckDto);
         return ResponseEntity.ok().build();
     }
 
