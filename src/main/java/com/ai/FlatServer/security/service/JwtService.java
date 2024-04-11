@@ -115,9 +115,9 @@ public class JwtService {
         response.setHeader(refreshHeader, refreshToken);
     }
 
-    public void updateRefreshTokenOfRepository(String email, String refreshToken) throws Exception {
+    public void updateRefreshTokenOfRepository(String email, String refreshToken) {
         userRepository.findByEmail(email)
-                .orElseThrow(Exception::new)
+                .orElseThrow()
                 .updateRefreshToken(refreshToken);
     }
 
