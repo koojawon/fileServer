@@ -39,8 +39,10 @@ public class UserService {
         return user;
     }
 
-    public boolean checkEmailDup(UserEmailDupCheckDto userEmailDupCheckDto) {
-        return userRepository.existsByEmail(userEmailDupCheckDto.getEmail());
+    public void checkEmailDup(UserEmailDupCheckDto userEmailDupCheckDto) {
+        if (userRepository.existsByEmail(userEmailDupCheckDto.getEmail())) {
+            throw new FlatException(FlatErrorCode.DUPLICATED_EMAIL);
+        }
     }
 
     public User getCurrentUser() {
