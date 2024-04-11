@@ -29,6 +29,7 @@ public class FolderController {
     @GetMapping("/{folderId}")
     public ResponseEntity<FolderInfo> getFolder(@PathVariable Long folderId) {
         User user = userService.getCurrentUser();
+        folderService.checkFolderAuthority(user, folderId);
         FolderInfo folderResult = folderService.getFolderWithId(folderId);
         return ResponseEntity.ok(folderResult);
     }
