@@ -47,17 +47,17 @@ public class FolderService {
         }
     }
 
-    @Cacheable(value = "folderCache", key = "#folderId")
+    @Cacheable(value = "folderCache", key = "'folderInfoCache' + #folderId")
     public FolderInfo getFolderWithId(Long folderId) {
-
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
+        
         List<FileInfo> folderInfos = fileInfoRepository.findAllByParentFolderId(folder.getId());
         return FolderMapper.FolderToFolderInfoMapper(folder, folderInfos);
     }
 
     @Transactional
-    @CacheEvict(value = "folderCache", key = "#currentFolderId")
+    @CacheEvict(value = "folderCache", key = "'folderInfoCache' + #currentFolderId")
     public void createFolder(String folderName, Long currentFolderId, User user) {
         Folder surFolder = folderRepository.findById(currentFolderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
@@ -85,13 +85,15 @@ public class FolderService {
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
 
         List<Long> folderIds = searchSubFolderIds(folder);
+        // 파일 삭제 가능할까?
 
         fileInfoRepository.deleteAllByParentFolderId(folderIds);
         folderRepository.deleteAllByIds(folderIds);
 
-        Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(folder.getParent().getId());
+        Objects.requireNonNull(cacheManager.getCache("folderCache"))
+                .evict("folderInfoCache" + folder.getParent().getId());
         for (Long id : folderIds) {
-            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(id);
+            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict("folderInfoCache" + id);
         }
     }
 
