@@ -1,7 +1,9 @@
 package com.ai.FlatServer.security.service;
 
+import com.ai.FlatServer.user.repository.RefreshTokenRepository;
 import com.ai.FlatServer.user.repository.UserRepository;
 import com.ai.FlatServer.user.repository.entity.User;
+import com.ai.FlatServer.user.repository.entity.UserRefreshToken;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -30,6 +32,7 @@ public class JwtService {
     private static final String EMAIL_CLAIM = "eml";
     private static final String BEARER = "Bearer";
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     @Value("${jwt.secretKey}")
     private String secretKey;
     private SecretKey encodedKey;
@@ -115,10 +118,15 @@ public class JwtService {
         response.setHeader(refreshHeader, refreshToken);
     }
 
+    @Transactional
     public void updateRefreshTokenOfRepository(String email, String refreshToken) {
-        userRepository.findByEmail(email)
-                .orElseThrow()
-                .updateRefreshToken(refreshToken);
+        User user = userRepository.findByEmail(email).orElseThrow();
+        UserRefreshToken userRefreshToken = UserRefreshToken
+                .builder()
+                .email(user.getEmail())
+                .refreshToken(refreshToken)
+                .build();
+        refreshTokenRepository.save(userRefreshToken);
     }
 
     public boolean isTokenValid(String accessToken) {
@@ -135,8 +143,12 @@ public class JwtService {
     @Transactional
     public String reIssueRefreshToken(User user) {
         String refreshToken = createRefreshToken();
-        user.updateRefreshToken(refreshToken);
-        userRepository.save(user);
+        UserRefreshToken userRefreshToken = UserRefreshToken
+                .builder()
+                .email(user.getEmail())
+                .refreshToken(refreshToken)
+                .build();
+        refreshTokenRepository.save(userRefreshToken);
         return refreshToken;
     }
 }
