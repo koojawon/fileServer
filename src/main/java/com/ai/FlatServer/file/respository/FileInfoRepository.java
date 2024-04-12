@@ -17,7 +17,7 @@ public interface FileInfoRepository extends JpaRepository<FileInfo, Long> {
     Optional<FileInfo> findByUid(String uid);
 
     @NonNull
-    @Cacheable(value = "fileCache", key = "#id", condition = "")
+    @Cacheable(value = "fileCache", key = "#id")
     Optional<FileInfo> findById(@NonNull Long id);
 
     List<FileInfo> findAllByFav(boolean bool);
@@ -32,4 +32,7 @@ public interface FileInfoRepository extends JpaRepository<FileInfo, Long> {
     List<FileInfo> selectAllByParentFolderId(List<Long> folderIds);
 
     List<FileInfo> findAllByFavAndOwner(boolean b, User user);
+
+    @Cacheable(value = "fileCache", key = "'all'+#user.getId()")
+    List<FileInfo> findByOwner(User user);
 }
