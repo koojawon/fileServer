@@ -65,13 +65,13 @@ public class FileService {
                 if (osName.contains("linux") && !(file.setExecutable(true)
                         && file.setReadable(true) && file.setWritable(true))) {
                     log.error("Directory Authority Set Failed!!");
+                    return;
                 }
-            } else {
-                log.error("Directory creation failed!! : ");
+                return;
             }
-        } else {
-            log.info("Directory exists...");
+            log.error("Directory creation failed!! : ");
         }
+        log.info("Directory exists...");
     }
 
     @Transactional
@@ -219,9 +219,9 @@ public class FileService {
         }
     }
 
-    public List<FileNameInfo> getAllFilesInfo() {
+    public List<FileNameInfo> getAllFilesInfo(User user) {
         List<FileNameInfo> fileList = new ArrayList<>();
-        for (FileInfo f : fileInfoRepository.findAll()) {
+        for (FileInfo f : fileInfoRepository.findByOwner(user)) {
             fileList.add(FolderMapper.FileInfoToFileNameInfoMapper(f));
         }
         return fileList;
@@ -235,4 +235,5 @@ public class FileService {
             throw new FlatException(FlatErrorCode.NO_AUTHORITY);
         }
     }
+
 }
