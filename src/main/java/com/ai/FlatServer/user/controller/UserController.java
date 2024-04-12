@@ -8,7 +8,6 @@ import com.ai.FlatServer.user.service.UserService;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,11 +31,6 @@ public class UserController {
     @PostMapping("/emailCheck")
     public ResponseEntity<Boolean> checkEmailDup(@RequestBody UserEmailDupCheckDto userEmailDupCheckDto) {
         userService.checkEmailDup(userEmailDupCheckDto);
-        return ResponseEntity.ok().build();
-    }
-
-    @PatchMapping("/logout")
-    public ResponseEntity<Boolean> logout() {
         return ResponseEntity.ok().build();
     }
 }
