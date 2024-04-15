@@ -1,7 +1,7 @@
 package com.ai.FlatServer.webrtc.repository.implement;
 
-import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
+import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +18,7 @@ public class ClientRepositoryInMemoryImpl implements ClientRepository {
 
     @Override
     public void setListenRelation(String presenterSessionId, String viewerUuid) {
-        if (listenRelations.replace(presenterSessionId, viewerUuid) == null) {
-            listenRelations.put(presenterSessionId, viewerUuid);
-        }
+        listenRelations.put(presenterSessionId, viewerUuid);
     }
 
     @Override
