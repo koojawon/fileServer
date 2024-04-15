@@ -6,6 +6,7 @@ import com.ai.FlatServer.webrtc.service.ViewerService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,7 @@ public class PresenterController extends TextWebSocketHandler {
     private final Gson gson = new Gson();
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
         log.info(jsonMessage.toString());
         switch (jsonMessage.get("id").getAsString()) {
@@ -46,7 +47,7 @@ public class PresenterController extends TextWebSocketHandler {
             presenterService.presenter(session, jsonMessage);
             viewerService.sendTargetInfo(session.getId(), jsonMessage);
         } catch (Exception e) {
-            handleErrorResponse(e, session, "presenterResponse");
+            handleErrorResponse(e, session);
         }
     }
 
@@ -65,20 +66,20 @@ public class PresenterController extends TextWebSocketHandler {
         presenterService.iceCandidateReceived(jsonMessage, session);
     }
 
-    private void handleErrorResponse(Throwable throwable, WebSocketSession session, String responseId)
+    private void handleErrorResponse(Throwable throwable, WebSocketSession session)
             throws IOException {
         log.error(throwable.getMessage(), throwable);
 
         session.sendMessage(new TextMessage(
                 new JsonMessageBuilder()
-                        .addProperty("id", responseId)
+                        .addProperty("id", "presenterResponse")
                         .addProperty("response", "rejected")
                         .addProperty("message", throwable.getMessage())
                         .buildAsString()));
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) {
         handleStopMessage(session);
     }
 }

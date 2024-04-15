@@ -38,7 +38,7 @@ public class ViewerController {
     }
 
 
-    private void handleViewerMessage(JsonObject jsonObject) throws IOException {
+    private void handleViewerMessage(JsonObject jsonObject) {
         try {
             TargetInfoResponseMessage message = decoder.toTargetInfoResponseMessage(jsonObject);
             mediaPipelineService.createMediaPipeline(message.getTargetId());
