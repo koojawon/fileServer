@@ -30,10 +30,9 @@ public class PresenterController extends TextWebSocketHandler {
             case "presenter":
                 handlePresenterMessage(session, jsonMessage);
                 break;
-            case "onIceCandidate": {
+            case "onIceCandidate":
                 handleIceMessage(jsonMessage, session);
                 break;
-            }
             case "stop":
                 handleStopMessage(session);
                 break;
@@ -53,8 +52,9 @@ public class PresenterController extends TextWebSocketHandler {
 
     private synchronized void handleStopMessage(WebSocketSession session) {
         try {
-            presenterService.stop(session);
+            log.info("stop requested");
             viewerService.notifyEnd(session);
+            presenterService.stop(session);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
