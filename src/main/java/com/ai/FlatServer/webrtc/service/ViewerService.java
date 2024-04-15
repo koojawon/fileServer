@@ -1,13 +1,14 @@
 package com.ai.FlatServer.webrtc.service;
 
+import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
+import com.ai.FlatServer.rabbitmq.service.MessageService;
 import com.ai.FlatServer.webrtc.message.IceCandidateMessage;
 import com.ai.FlatServer.webrtc.message.TargetInfoResponseMessage;
-import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
-import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
-import com.ai.FlatServer.rabbitmq.service.MessageService;
+import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.google.gson.JsonObject;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.IceCandidate;
@@ -33,6 +34,7 @@ public class ViewerService {
 
     public void notifyEnd(WebSocketSession session) {
         String uuid = clientRepository.getViewerWithPresenter(session.getId());
+        log.info(uuid);
         if (uuid != null) {
             JsonObject jsonObject = encoder.toEndMessage(session.getId());
             messageService.sendMessage(jsonObject);
@@ -56,13 +58,12 @@ public class ViewerService {
             reject();
             throw new NoSuchElementException("No such presenter exists!");
         } else {
-            UserSession viewerSession = UserSession.builder().uuid(message.getUuid()).build();
+            UserSession viewerSession = UserSession.builder().uuid(UUID.randomUUID().toString()).build();
             viewerSession.setSdpOffer(message.getSdpOffer());
             clientRepository.putUser(viewerSession.getUuid(), viewerSession);
-
             WebRtcEndpoint viewerWebRtc = createViewerEndpoint(message.getTargetId());
             viewerSession.setWebRtcEndpoint(viewerWebRtc);
-            log.info("created new viewer :" + viewerSession.getUuid());
+            log.info("created new viewer :{}", viewerSession.getUuid());
             return viewerSession.getUuid();
         }
     }
