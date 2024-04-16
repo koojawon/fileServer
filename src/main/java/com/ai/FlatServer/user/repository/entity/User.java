@@ -1,6 +1,5 @@
 package com.ai.FlatServer.user.repository.entity;
 
-import com.ai.FlatServer.folder.repository.entity.Folder;
 import com.ai.FlatServer.user.enums.Role;
 import com.ai.FlatServer.user.enums.SocialType;
 import jakarta.persistence.Column;
@@ -10,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -49,8 +47,7 @@ public class User {
 
     private Integer folderCount;
 
-    @OneToOne
-    private Folder userRootFolder;
+    private Long userRootFolderId;
 
     public void authorizeUser() {
         this.role = Role.USER;
