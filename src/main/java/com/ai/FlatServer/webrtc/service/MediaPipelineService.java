@@ -1,7 +1,7 @@
 package com.ai.FlatServer.webrtc.service;
 
-import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
+import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class MediaPipelineService {
 
         presenterEndpoint.connect(viewerEndpoint);
         viewerEndpoint.connect(presenterEndpoint);
-        log.info("connected" + viewerId + " and " + presenterId);
+        log.info("connected{} and {}", viewerId, presenterId);
     }
 
     public void setRelation(String presenterId, String viewerId) {

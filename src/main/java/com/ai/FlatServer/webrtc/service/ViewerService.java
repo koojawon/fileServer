@@ -1,11 +1,11 @@
 package com.ai.FlatServer.webrtc.service;
 
+import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
+import com.ai.FlatServer.rabbitmq.service.MessageService;
 import com.ai.FlatServer.webrtc.message.IceCandidateMessage;
 import com.ai.FlatServer.webrtc.message.TargetInfoResponseMessage;
-import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
-import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
-import com.ai.FlatServer.rabbitmq.service.MessageService;
+import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.google.gson.JsonObject;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +62,7 @@ public class ViewerService {
 
             WebRtcEndpoint viewerWebRtc = createViewerEndpoint(message.getTargetId());
             viewerSession.setWebRtcEndpoint(viewerWebRtc);
-            log.info("created new viewer :" + viewerSession.getUuid());
+            log.info("created new viewer :{}", viewerSession.getUuid());
             return viewerSession.getUuid();
         }
     }

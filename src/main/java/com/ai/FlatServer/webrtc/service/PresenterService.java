@@ -1,8 +1,8 @@
 package com.ai.FlatServer.webrtc.service;
 
 import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
-import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
+import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -31,7 +31,7 @@ public class PresenterService {
                     UserSession.builder()
                             .session(session)
                             .sdpOffer(jsonMessage.get("sdpOffer").getAsString()).build());
-            log.info("generating new session... " + session.getId());
+            log.info("generating new session... {}", session.getId());
         }
     }
 
