@@ -3,6 +3,7 @@ package com.ai.FlatServer.folder.dto.mapper;
 import com.ai.FlatServer.file.dto.response.FileNameInfo;
 import com.ai.FlatServer.file.respository.dao.FileInfo;
 import com.ai.FlatServer.folder.dto.response.FolderInfo;
+import com.ai.FlatServer.folder.dto.response.SubFolderInfo;
 import com.ai.FlatServer.folder.repository.entity.Folder;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -27,18 +28,34 @@ public class FolderMapper {
                     .parentId(null)
                     .folderName(folder.getFolderName())
                     .build();
-            if (folder.getParent() != null) {
-                folderInfo.setParentId(folder.getParent().getId());
+            if (folder.getParentId() != null) {
+                folderInfo.setParentId(folder.getParentId());
             }
             return folderInfo;
         }
         return null;
     }
 
-    public static FolderInfo FolderToFolderInfoMapper(Folder folder, List<FileInfo> subFiles) {
+    private static SubFolderInfo FolderToSubFolderInfo(Folder folder) {
+        if (folder != null) {
+            SubFolderInfo folderInfo = SubFolderInfo.builder()
+                    .id(folder.getId())
+                    .modDate(folder.getModDate())
+                    .parentId(null)
+                    .folderName(folder.getFolderName())
+                    .build();
+            if (folder.getParentId() != null) {
+                folderInfo.setParentId(folder.getParentId());
+            }
+            return folderInfo;
+        }
+        return null;
+    }
+
+    public static FolderInfo FolderToFolderInfoMapper(Folder folder, List<FileInfo> subFiles, List<Folder> subFolders) {
         FolderInfo folderInfo = FolderToFolderInfo(folder);
-        for (Folder f : folder.getSubDirs()) {
-            folderInfo.getSubDirs().add(FolderToFolderInfo(f));
+        for (Folder f : subFolders) {
+            folderInfo.getSubDirs().add(FolderToSubFolderInfo(f));
         }
         for (FileInfo f : subFiles) {
             folderInfo.getSubFiles().add(FileInfoToFileNameInfoMapper(f));
