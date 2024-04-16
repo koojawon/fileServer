@@ -4,16 +4,16 @@ import com.ai.FlatServer.security.filter.JsonUsernamePasswordAuthenticationFilte
 import com.ai.FlatServer.security.filter.JwtAuthenticationProcessingFilter;
 import com.ai.FlatServer.security.handler.jsonlogin.LoginFailureHandler;
 import com.ai.FlatServer.security.handler.jsonlogin.LoginSuccessHandler;
+import com.ai.FlatServer.security.handler.jsonlogout.CustomLogoutSuccessHandler;
 import com.ai.FlatServer.security.handler.oauth2.OAuth2FailureHandler;
 import com.ai.FlatServer.security.handler.oauth2.OAuth2SuccessHandler;
 import com.ai.FlatServer.security.service.CustomOAuth2UserService;
-import com.ai.FlatServer.security.service.JwtService;
 import com.ai.FlatServer.security.service.LoginService;
-import com.ai.FlatServer.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -33,12 +33,14 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 public class SecurityConfiguration {
 
     private final LoginService loginService;
-    private final JwtService jwtService;
-    private final UserRepository userRepository;
+    private final JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter;
     private final ObjectMapper objectMapper;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final LoginSuccessHandler loginSuccessHandler;
+    private final LoginFailureHandler loginFailureHandler;
+    private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -51,10 +53,12 @@ public class SecurityConfiguration {
                 .sessionManagement(
                         conf -> conf.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(conf -> {
-                    conf.requestMatchers("/", "/user").permitAll()
-                            .anyRequest().authenticated();
-                })
+                .authorizeHttpRequests(conf -> conf.requestMatchers("/").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .anyRequest().authenticated())
+                .logout(c -> c.logoutSuccessHandler(customLogoutSuccessHandler)
+                        .logoutUrl("/logout")
+                        .clearAuthentication(true))
 //                .oauth2Login(oauth2Login ->
 //                        oauth2Login.userInfoEndpoint(
 //                                        userInfoEndpointConfig -> userInfoEndpointConfig.userService(customOAuth2UserService))
@@ -62,7 +66,7 @@ public class SecurityConfiguration {
 //                                .failureHandler(oAuth2FailureHandler)
 //                                .clientRegistrationRepository())
                 .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
-                .addFilterBefore(jwtAuthenticationProcessingFilter(),
+                .addFilterBefore(jwtAuthenticationProcessingFilter,
                         JsonUsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -81,27 +85,13 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public LoginSuccessHandler loginSuccessHandler() {
-        return new LoginSuccessHandler(jwtService, userRepository);
-    }
-
-    @Bean
-    public LoginFailureHandler loginFailureHandler() {
-        return new LoginFailureHandler();
-    }
-
-    @Bean
     public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter() {
-        JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter = new JsonUsernamePasswordAuthenticationFilter(
-                objectMapper);
+        JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordAuthenticationFilter =
+                new JsonUsernamePasswordAuthenticationFilter(objectMapper);
         jsonUsernamePasswordAuthenticationFilter.setAuthenticationManager(authenticationManager());
-        jsonUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
-        jsonUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
+        jsonUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler);
+        jsonUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(loginFailureHandler);
         return jsonUsernamePasswordAuthenticationFilter;
     }
 
-    @Bean
-    public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {
-        return new JwtAuthenticationProcessingFilter(jwtService, userRepository);
-    }
 }
