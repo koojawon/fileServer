@@ -1,7 +1,6 @@
 package com.ai.FlatServer.file.respository;
 
 import com.ai.FlatServer.file.respository.dao.FileInfo;
-import com.ai.FlatServer.user.repository.entity.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,7 +16,7 @@ public interface FileInfoRepository extends JpaRepository<FileInfo, Long> {
     Optional<FileInfo> findByUid(String uid);
 
     @NonNull
-    @Cacheable(value = "fileCache", key = "#id")
+    @Cacheable(cacheNames = "fileCache", key = "#id")
     Optional<FileInfo> findById(@NonNull Long id);
 
     List<FileInfo> findAllByFav(boolean bool);
@@ -31,8 +30,8 @@ public interface FileInfoRepository extends JpaRepository<FileInfo, Long> {
     @Query(value = "select * from FileInfo f where f.parentFolderId in :folderIds", nativeQuery = true)
     List<FileInfo> selectAllByParentFolderId(List<Long> folderIds);
 
-    List<FileInfo> findAllByFavAndOwner(boolean b, User user);
+    List<FileInfo> findAllByFavAndOwnerId(boolean b, Long userId);
 
-    @Cacheable(value = "fileCache", key = "'all'+#user.getId()")
-    List<FileInfo> findByOwner(User user);
+    @Cacheable(cacheNames = "fileCache", key = "'all'+#userId")
+    List<FileInfo> findByOwnerId(Long userId);
 }
