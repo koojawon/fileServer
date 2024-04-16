@@ -42,44 +42,45 @@ public class FolderService {
         try {
             folderRepository.findById(1L).orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
         } catch (FlatException e) {
-            Folder folder = Folder.builder().parent(null).folderName("root").build();
+            Folder folder = Folder.builder().parentId(null).type(FolderType.ROOT).folderName("root").build();
             folderRepository.save(folder);
         }
     }
 
-    @Cacheable(value = "folderCache", key = "'folderInfoCache' + #folderId")
+    @Cacheable(cacheNames = "folderCache", key = "'folderInfoCache' + #folderId")
     public FolderInfo getFolderWithId(Long folderId) {
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
-        
-        List<FileInfo> folderInfos = fileInfoRepository.findAllByParentFolderId(folder.getId());
-        return FolderMapper.FolderToFolderInfoMapper(folder, folderInfos);
+
+        List<FileInfo> subFiles = fileInfoRepository.findAllByParentFolderId(folder.getId());
+        List<Folder> subFolders = folderRepository.findByParentId(folder.getId());
+        return FolderMapper.FolderToFolderInfoMapper(folder, subFiles, subFolders);
     }
 
     @Transactional
-    @CacheEvict(value = "folderCache", key = "'folderInfoCache' + #currentFolderId")
+    @CacheEvict(cacheNames = "folderCache", key = "'folderInfoCache' + #currentFolderId")
     public void createFolder(String folderName, Long currentFolderId, User user) {
         Folder surFolder = folderRepository.findById(currentFolderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
         Folder folder = Folder.builder()
                 .folderName(folderName)
-                .parent(surFolder)
+                .parentId(surFolder.getId())
                 .type(FolderType.LEAF)
-                .owner(user)
+                .ownerId(user.getId())
                 .build();
-        surFolder.getSubDirs().add(folder);
         folderRepository.save(folder);
     }
 
     @Transactional
     public void createRootFolderFor(User user) {
-        Folder folder = Folder.builder().folderName("root").type(FolderType.ROOT).build();
-        user.setUserRootFolder(folder);
-        folderRepository.save(folder);
+        Folder folder = Folder.builder().folderName("root").ownerId(user.getId()).parentId(1L).type(FolderType.ROOT)
+                .build();
+        folderRepository.saveAndFlush(folder);
+        user.setUserRootFolderId(folder.getId());
     }
 
     @Transactional
-    @CacheEvict(value = "fileCache", key = "'all'")
+    @CacheEvict(cacheNames = "fileCache", key = "'all'")
     public void deleteFolder(Long targetFolderId) {
         Folder folder = folderRepository.findById(targetFolderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
@@ -91,42 +92,40 @@ public class FolderService {
         folderRepository.deleteAllByIds(folderIds);
 
         Objects.requireNonNull(cacheManager.getCache("folderCache"))
-                .evict("folderInfoCache" + folder.getParent().getId());
+                .evict("folderInfoCache" + folder.getParentId());
         for (Long id : folderIds) {
             Objects.requireNonNull(cacheManager.getCache("folderCache")).evict("folderInfoCache" + id);
         }
     }
 
     private List<Long> searchSubFolderIds(Folder folder) {
-        List<Long> files = new ArrayList<>();
-        Queue<Folder> q = new LinkedList<>(folder.getSubDirs());
+        List<Long> folders = new ArrayList<>();
+        Queue<Folder> q = new LinkedList<>(folderRepository.findByParentId(folder.getId()));
         while (!q.isEmpty()) {
             Folder cur = q.poll();
-            files.add(cur.getId());
-            for (Folder f : cur.getSubDirs()) {
+            folders.add(cur.getId());
+            for (Folder f : folderRepository.findByParentId(cur.getId())) {
                 q.offer(f);
             }
         }
-        files.add(folder.getId());
-        return files;
+        folders.add(folder.getId());
+        return folders;
     }
 
     @Transactional
-    @CacheEvict(value = "folderCache", key = "#targetFolderId")
+    @CacheEvict(cacheNames = "folderCache", key = "#targetFolderId")
     public void patchUpdate(FolderPatchRequest folderPatchRequest, Long targetFolderId) {
         Folder folder = folderRepository.findById(targetFolderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
-        Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(folder.getParent().getId());
+        Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(folder.getParentId());
         if (folderPatchRequest.getNewName() != null) {
             folder.setFolderName(folderPatchRequest.getNewName());
         }
         if (folderPatchRequest.getNewParent() != null) {
-            folder.getParent().getSubDirs().remove(folder);
             Folder newParent = folderRepository.findById(folderPatchRequest.getNewParent())
                     .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
             Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(newParent.getId());
-            folder.setParent(newParent);
-            newParent.getSubDirs().add(folder);
+            folder.setParentId(newParent.getParentId());
         }
     }
 
@@ -134,7 +133,8 @@ public class FolderService {
     public void checkFolderAuthority(User user, Long folderId) {
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
-        if (folder.getOwner() == null || (!user.equals(folder.getOwner()) && !user.getRole().equals(Role.ADMIN))) {
+        if (folder.getOwnerId() == null || (!user.getId().equals(folder.getOwnerId()) && !user.getRole()
+                .equals(Role.ADMIN))) {
             throw new FlatException(FlatErrorCode.NO_AUTHORITY);
         }
     }
