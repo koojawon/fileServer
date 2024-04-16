@@ -13,7 +13,8 @@ public enum FlatErrorCode {
     MXL_NOT_READY(HttpStatus.SC_BAD_REQUEST, "해당 PDF의 MXL 파일이 존재하지 않습니다."),
     UNSUPPORTED_EXTENSION(HttpStatus.SC_BAD_REQUEST, "지원하지 않는 확장자입니다."),
     NO_AUTHORITY(HttpStatus.SC_FORBIDDEN, "권한이 없습니다."),
-    DUPLICATED_EMAIL(HttpStatus.SC_BAD_REQUEST, "이메일이 중복됩니다.");
+    DUPLICATED_EMAIL(HttpStatus.SC_BAD_REQUEST, "이메일이 중복됩니다."),
+    FOLDER_CREATION_LIMIT(HttpStatus.SC_BAD_REQUEST, "폴더 갯수의 상한에 도달했습니다.");
     private final HttpStatusCode statusCode;
     private final String statusMessage;
 
