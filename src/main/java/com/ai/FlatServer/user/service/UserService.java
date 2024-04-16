@@ -9,15 +9,16 @@ import com.ai.FlatServer.user.repository.UserRepository;
 import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -32,6 +33,7 @@ public class UserService {
                 .email(userSignUpDto.getEmail())
                 .nickname(userSignUpDto.getNickname())
                 .password(userSignUpDto.getPassword())
+                .folderCount(5)
                 .build();
         user.authorizeUser();
         user.passwordEncode(passwordEncoder);
@@ -51,29 +53,39 @@ public class UserService {
         if (!auth.isAuthenticated()) {
             throw new FlatException(FlatErrorCode.NO_AUTHORITY);
         }
-        UserDetails principal = (UserDetails) auth.getPrincipal();
-        return userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        Object credentials = auth.getCredentials();
+        User user;
+        if (credentials instanceof User) {
+            user = (User) credentials;
+        } else {
+            throw new FlatException(FlatErrorCode.NO_AUTHORITY);
+        }
+        return user;
     }
 
-    public boolean checkCreateAvailability() {
-        User user = getCurrentUser();
-        return user.getFolderCount() > 0;
+    public void checkCreateAvailability(User user) {
+        if (user.getFolderCount() <= 0) {
+            throw new FlatException(FlatErrorCode.FOLDER_CREATION_LIMIT);
+        }
     }
 
+    @Transactional
     public void decreaseFolderCount() {
         User user = getCurrentUser();
         user.setFolderCount(user.getFolderCount() - 1);
+        userRepository.save(user);
     }
 
+    @Transactional
     public void increaseFolderCount() {
         User currentUser = getCurrentUser();
-
         currentUser.setFolderCount(currentUser.getFolderCount() + 1);
+        userRepository.save(currentUser);
     }
 
     public void checkFileAuthority(FileInfo fileInfo) {
         User user = getCurrentUser();
-        if (!fileInfo.getOwner().equals(user)) {
+        if (!fileInfo.getOwnerId().equals(user.getId())) {
             throw new FlatException(FlatErrorCode.NO_AUTHORITY);
         }
     }
