@@ -5,7 +5,6 @@ import com.ai.FlatServer.security.service.JwtService;
 import com.ai.FlatServer.user.enums.Role;
 import com.ai.FlatServer.user.repository.UserRepository;
 import com.ai.FlatServer.user.repository.entity.User;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -24,7 +23,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                        Authentication authentication) throws IOException {
         CustomOAuth2User customOAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
         if (customOAuth2User.getRole() == Role.GUEST) {
@@ -44,7 +43,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private void loginSuccess(HttpServletRequest request, HttpServletResponse response,
                               CustomOAuth2User customOAuth2User) {
         String accessToken = jwtService.createAccessToken(customOAuth2User.getEmail());
-        String refreshToken = jwtService.createRefreshToken();
+        String refreshToken = jwtService.createRefreshToken(customOAuth2User.getEmail());
         request.getHeader(jwtService.getRefreshHeader());
 
         response.addHeader(jwtService.getAccessHeader(), "Bearer " + accessToken);
