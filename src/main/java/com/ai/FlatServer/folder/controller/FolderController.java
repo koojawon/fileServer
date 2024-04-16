@@ -38,11 +38,10 @@ public class FolderController {
     @PostMapping
     public ResponseEntity<Boolean> createFolder(@RequestBody FolderCreationRequest folderCreationRequest) {
         User user = userService.getCurrentUser();
-        if (userService.checkCreateAvailability()) {
-            folderService.createFolder(folderCreationRequest.getFolderName(),
-                    folderCreationRequest.getCurrentFolderId(), user);
-            userService.decreaseFolderCount();
-        }
+        userService.checkCreateAvailability(user);
+        folderService.createFolder(folderCreationRequest.getFolderName(),
+                folderCreationRequest.getCurrentFolderId(), user);
+        userService.decreaseFolderCount();
         return ResponseEntity.created(URI.create("")).build();
     }
 
