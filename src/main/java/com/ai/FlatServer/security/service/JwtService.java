@@ -30,7 +30,7 @@ public class JwtService {
     private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
     private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
     private static final String EMAIL_CLAIM = "eml";
-    private static final String BEARER = "Bearer";
+    private static final String BEARER = "Bearer ";
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     @Value("${jwt.secretKey}")
@@ -57,18 +57,27 @@ public class JwtService {
                         .atZone(ZoneId.systemDefault())
                         .toInstant()
                         .plusMillis(accessTokenExpirationPeriod)))
+                .issuedAt(Date.from(Instant.now()
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()))
+                .issuer("flatMusic")
                 .claim(EMAIL_CLAIM, email)
                 .signWith(encodedKey)
                 .compact();
     }
 
-    public String createRefreshToken() {
+    public String createRefreshToken(String email) {
         return Jwts.builder()
                 .subject(REFRESH_TOKEN_SUBJECT)
                 .expiration(Date.from(Instant.now()
                         .atZone(ZoneId.systemDefault())
                         .toInstant()
                         .plusMillis(refreshTokenExpirationPeriod)))
+                .issuedAt(Date.from(Instant.now()
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()))
+                .issuer("flatMusic")
+                .claim(EMAIL_CLAIM, email)
                 .signWith(encodedKey)
                 .compact();
     }
@@ -133,22 +142,15 @@ public class JwtService {
         try {
             Jwts.parser()
                     .verifyWith(encodedKey)
-                    .build();
+                    .build()
+                    .parseSignedClaims(accessToken);
             return true;
         } catch (SignatureException e) {
             return false;
         }
     }
 
-    @Transactional
     public String reIssueRefreshToken(User user) {
-        String refreshToken = createRefreshToken();
-        UserRefreshToken userRefreshToken = UserRefreshToken
-                .builder()
-                .email(user.getEmail())
-                .refreshToken(refreshToken)
-                .build();
-        refreshTokenRepository.save(userRefreshToken);
-        return refreshToken;
+        return createRefreshToken(user.getEmail());
     }
 }
