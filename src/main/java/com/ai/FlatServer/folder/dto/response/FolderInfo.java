@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @AllArgsConstructor
 public class FolderInfo {
-    private final List<FolderInfo> subDirs = new ArrayList<>();
+    private final List<SubFolderInfo> subDirs = new ArrayList<>();
     private final List<FileNameInfo> subFiles = new ArrayList<>();
     private Long id;
     private String folderName;
