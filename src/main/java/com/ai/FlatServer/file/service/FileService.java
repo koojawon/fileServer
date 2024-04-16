@@ -131,7 +131,7 @@ public class FileService {
         return uploadPath + fileName;
     }
 
-    public FileInfo getPdf(String fileUid) throws MalformedURLException {
+    public FileInfo getPdf(String fileUid) {
         return fileInfoRepository.findByUid(fileUid)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_UID));
     }
@@ -162,9 +162,9 @@ public class FileService {
         throw new FlatException(FlatErrorCode.MXL_NOT_READY);
     }
 
-    @Cacheable(value = "fileCache", key = "'fav' + #user.getId()")
+    @Cacheable(cacheNames = "fileCache", key = "'fav' + #user.getId()")
     public List<FileNameInfo> getFavs(User user) {
-        return fileInfoRepository.findAllByFavAndOwner(true, user)
+        return fileInfoRepository.findAllByFavAndOwnerId(true, user.getId())
                 .stream()
                 .map(FolderMapper::FileInfoToFileNameInfoMapper)
                 .toList();
@@ -221,7 +221,7 @@ public class FileService {
 
     public List<FileNameInfo> getAllFilesInfo(User user) {
         List<FileNameInfo> fileList = new ArrayList<>();
-        for (FileInfo f : fileInfoRepository.findByOwner(user)) {
+        for (FileInfo f : fileInfoRepository.findByOwnerId(user.getId())) {
             fileList.add(FolderMapper.FileInfoToFileNameInfoMapper(f));
         }
         return fileList;
@@ -231,7 +231,8 @@ public class FileService {
     public void checkFileAuthority(User user, Long targetFileId) {
         FileInfo fileInfo = fileInfoRepository.findById(targetFileId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
-        if (fileInfo.getOwner() == null || (!fileInfo.getOwner().equals(user) && !user.getRole().equals(Role.ADMIN))) {
+        if (fileInfo.getOwnerId() == null || (!fileInfo.getOwnerId().equals(user.getId()) && !user.getRole()
+                .equals(Role.ADMIN))) {
             throw new FlatException(FlatErrorCode.NO_AUTHORITY);
         }
     }
