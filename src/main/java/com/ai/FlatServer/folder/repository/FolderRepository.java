@@ -18,6 +18,8 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
     void deleteAllByIds(List<Long> ids);
 
     @NonNull
-    @Cacheable(value = "folderCache", key = "#id")
+    @Cacheable(cacheNames = "folderCache", key = "#id")
     Optional<Folder> findById(@NonNull Long id);
+
+    List<Folder> findByParentId(Long id);
 }
