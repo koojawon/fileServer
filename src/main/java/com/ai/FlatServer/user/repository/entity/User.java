@@ -43,8 +43,6 @@ public class User {
 
     private String socialId;
 
-    private String refreshToken;
-
     private Integer folderCount;
 
     private Long userRootFolderId;
@@ -55,9 +53,5 @@ public class User {
 
     public void passwordEncode(PasswordEncoder passwordEncoder) {
         this.password = passwordEncoder.encode(this.password);
-    }
-
-    public void updateRefreshToken(String newToken) {
-        this.refreshToken = newToken;
     }
 }
