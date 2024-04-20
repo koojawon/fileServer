@@ -2,9 +2,7 @@ package com.ai.FlatServer.security.handler.oauth2;
 
 import com.ai.FlatServer.security.dto.oauth2.CustomOAuth2User;
 import com.ai.FlatServer.security.service.JwtService;
-import com.ai.FlatServer.user.enums.Role;
 import com.ai.FlatServer.user.repository.UserRepository;
-import com.ai.FlatServer.user.repository.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,19 +23,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         CustomOAuth2User customOAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-
-        if (customOAuth2User.getRole() == Role.GUEST) {
-            String accessToken = jwtService.createAccessToken(customOAuth2User.getEmail());
-            response.addHeader(jwtService.getAccessHeader(), "Bearer " + accessToken);
-            response.sendRedirect("oauth2/signup");
-
-            jwtService.sendAccessAndRefreshToken(response, accessToken, null);
-            User user = userRepository.findByEmail(customOAuth2User.getEmail())
-                    .orElseThrow();
-            user.authorizeUser();
-        } else {
-            loginSuccess(request, response, customOAuth2User);
-        }
+        loginSuccess(request, response, customOAuth2User);
     }
 
     private void loginSuccess(HttpServletRequest request, HttpServletResponse response,
