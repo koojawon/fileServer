@@ -1,6 +1,6 @@
 package com.ai.FlatServer.webrtc.service;
 
-import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
+import com.ai.FlatServer.global.rabbitmq.mapper.JsonMessageEncoder;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
 import com.ai.FlatServer.webrtc.repository.dao.UserSession;
 import com.google.gson.JsonObject;

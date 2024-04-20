@@ -1,7 +1,7 @@
 package com.ai.FlatServer.webrtc.service;
 
-import com.ai.FlatServer.rabbitmq.mapper.JsonMessageEncoder;
-import com.ai.FlatServer.rabbitmq.service.MessageService;
+import com.ai.FlatServer.global.rabbitmq.mapper.JsonMessageEncoder;
+import com.ai.FlatServer.global.rabbitmq.service.MessageService;
 import com.ai.FlatServer.webrtc.message.IceCandidateMessage;
 import com.ai.FlatServer.webrtc.message.TargetInfoResponseMessage;
 import com.ai.FlatServer.webrtc.repository.ClientRepository;
