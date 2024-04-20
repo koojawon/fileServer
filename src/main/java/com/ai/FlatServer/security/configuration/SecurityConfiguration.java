@@ -59,12 +59,12 @@ public class SecurityConfiguration {
                 .logout(c -> c.logoutSuccessHandler(customLogoutSuccessHandler)
                         .logoutUrl("/logout")
                         .clearAuthentication(true))
-//                .oauth2Login(oauth2Login ->
-//                        oauth2Login.userInfoEndpoint(
-//                                        userInfoEndpointConfig -> userInfoEndpointConfig.userService(customOAuth2UserService))
-//                                .successHandler(oAuth2SuccessHandler)
-//                                .failureHandler(oAuth2FailureHandler)
-//                                .clientRegistrationRepository())
+                .oauth2Login(oauth2Login ->
+                        oauth2Login.userInfoEndpoint(
+                                        userInfoEndpointConfig -> userInfoEndpointConfig.userService(customOAuth2UserService))
+                                .successHandler(oAuth2SuccessHandler)
+                                .failureHandler(oAuth2FailureHandler)
+                )
                 .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
                 .addFilterBefore(jwtAuthenticationProcessingFilter,
                         JsonUsernamePasswordAuthenticationFilter.class)
