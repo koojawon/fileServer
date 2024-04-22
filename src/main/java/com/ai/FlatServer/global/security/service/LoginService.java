@@ -19,7 +19,7 @@ public class LoginService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("해당하는 사용자가 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("아이디나 비밀번호가 일치하지 않습니다."));
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
