@@ -34,12 +34,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         String refreshToken = jwtService.createRefreshToken(email);
 
         jwtService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
-
-        userRepository.findByEmail(email)
-                .ifPresent(user -> {
-                    redisService.setValues(refreshToken, email,
-                            Duration.ofMillis(refreshTokenExpirationPeriod));
-                });
+        redisService.setValues(refreshToken, email, Duration.ofMillis(refreshTokenExpirationPeriod));
     }
 
     private String extractUserName(Authentication authentication) {
