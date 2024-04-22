@@ -54,11 +54,12 @@ public class SecurityConfiguration {
                         conf -> conf.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(conf -> conf.requestMatchers("/").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/user", "/user/emailCheck").permitAll()
+                        .requestMatchers("/audio").permitAll()
                         .anyRequest().authenticated())
-                .logout(c -> c.logoutSuccessHandler(customLogoutSuccessHandler)
-                        .logoutUrl("/logout")
-                        .clearAuthentication(true))
+                .logout(c -> c.logoutUrl("/logout")
+                        .clearAuthentication(true)
+                        .logoutSuccessHandler(customLogoutSuccessHandler))
                 .oauth2Login(oauth2Login ->
                         oauth2Login.userInfoEndpoint(
                                         userInfoEndpointConfig -> userInfoEndpointConfig.userService(customOAuth2UserService))
