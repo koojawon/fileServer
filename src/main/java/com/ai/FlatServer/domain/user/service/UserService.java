@@ -1,6 +1,5 @@
 package com.ai.FlatServer.domain.user.service;
 
-import com.ai.FlatServer.domain.file.respository.dao.FileInfo;
 import com.ai.FlatServer.domain.user.dto.UserEmailDupCheckDto;
 import com.ai.FlatServer.domain.user.dto.UserSignUpDto;
 import com.ai.FlatServer.domain.user.repository.UserRepository;
@@ -8,8 +7,10 @@ import com.ai.FlatServer.domain.user.repository.entity.User;
 import com.ai.FlatServer.global.exceptions.FlatErrorCode;
 import com.ai.FlatServer.global.exceptions.FlatException;
 import jakarta.transaction.Transactional;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CacheManager cacheManager;
 
     public User signUp(UserSignUpDto userSignUpDto) {
         if (userRepository.findByEmail(userSignUpDto.getEmail()).isPresent()) {
@@ -64,7 +66,7 @@ public class UserService {
     }
 
     public void checkCreateAvailability(User user) {
-        if (user.getFolderCount() <= 0) {
+        if (user.getFolderCount() < 1) {
             throw new FlatException(FlatErrorCode.FOLDER_CREATION_LIMIT);
         }
     }
@@ -73,20 +75,15 @@ public class UserService {
     public void decreaseFolderCount() {
         User user = getCurrentUser();
         user.setFolderCount(user.getFolderCount() - 1);
+        Objects.requireNonNull(cacheManager.getCache("userName")).put("userInfo" + user.getEmail(), user);
         userRepository.save(user);
     }
 
     @Transactional
     public void increaseFolderCount() {
-        User currentUser = getCurrentUser();
-        currentUser.setFolderCount(currentUser.getFolderCount() + 1);
-        userRepository.save(currentUser);
-    }
-
-    public void checkFileAuthority(FileInfo fileInfo) {
         User user = getCurrentUser();
-        if (!fileInfo.getOwnerId().equals(user.getId())) {
-            throw new FlatException(FlatErrorCode.NO_AUTHORITY);
-        }
+        user.setFolderCount(user.getFolderCount() + 1);
+        Objects.requireNonNull(cacheManager.getCache("userName")).put("userInfo" + user.getEmail(), user);
+        userRepository.save(user);
     }
 }
