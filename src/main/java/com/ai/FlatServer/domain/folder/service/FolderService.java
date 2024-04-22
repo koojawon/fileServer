@@ -47,9 +47,9 @@ public class FolderService {
         }
     }
 
-    @Cacheable(cacheNames = "folderCache", key = "'folderInfoCache' + #folderId")
-    public FolderInfo getFolderWithId(Long folderId) {
-        Folder folder = folderRepository.findById(folderId)
+    @Cacheable(cacheNames = "folderCache", key = "'folderInfoCache' + #targetFolderId")
+    public FolderInfo getFolderWithId(Long targetFolderId) {
+        Folder folder = folderRepository.findById(targetFolderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
 
         List<FileInfo> subFiles = fileInfoRepository.findAllByParentFolderId(folder.getId());
@@ -73,20 +73,22 @@ public class FolderService {
 
     @Transactional
     public void createRootFolderFor(User user) {
-        Folder folder = Folder.builder().folderName("root").ownerId(user.getId()).parentId(1L).type(FolderType.ROOT)
+        Folder folder = Folder.builder()
+                .folderName("root")
+                .ownerId(user.getId())
+                .parentId(1L)
+                .type(FolderType.ROOT)
                 .build();
         folderRepository.saveAndFlush(folder);
         user.setUserRootFolderId(folder.getId());
     }
 
     @Transactional
-    @CacheEvict(cacheNames = "fileCache", key = "'all'")
     public void deleteFolder(Long targetFolderId) {
         Folder folder = folderRepository.findById(targetFolderId)
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
 
         List<Long> folderIds = searchSubFolderIds(folder);
-        // 파일 삭제 가능할까?
 
         fileInfoRepository.deleteAllByParentFolderId(folderIds);
         folderRepository.deleteAllByIds(folderIds);
