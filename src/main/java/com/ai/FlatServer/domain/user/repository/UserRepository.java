@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Cacheable(cacheNames = "userCache", key = "'userInfo'+#email")
+    @Cacheable(cacheNames = "userCache", key = "'userInfo'+#email", unless = "#result == null")
     Optional<User> findByEmail(String email);
 
     Optional<User> findBySocialTypeAndSocialId(SocialType socialType, String socialId);
