@@ -73,7 +73,7 @@ public class OAuthAttributes {
         return User.builder()
                 .socialType(socialType)
                 .socialId(oAuth2UserInfo.getId())
-                .email(oAuth2UserInfo.getId() + "-" + socialType.name() + "@socialUser.com")
+                .email(oAuth2UserInfo.getEmail())
                 .nickname(oAuth2UserInfo.getNickname())
                 .role(Role.USER)
                 .folderCount(5).build();
