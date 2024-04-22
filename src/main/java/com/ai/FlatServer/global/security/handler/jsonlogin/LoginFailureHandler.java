@@ -16,6 +16,6 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/plain;charset=UTF-8");
-        response.getWriter().write("로그인 실패!");
+        response.getWriter().write("로그인 실패!" + exception.getMessage());
     }
 }
