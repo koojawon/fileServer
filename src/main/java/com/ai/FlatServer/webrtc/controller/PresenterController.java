@@ -31,9 +31,10 @@ public class PresenterController extends TextWebSocketHandler {
             case "presenter":
                 handlePresenterMessage(session, jsonMessage);
                 break;
-            case "onIceCandidate":
+            case "onIceCandidate": {
                 handleIceMessage(jsonMessage, session);
                 break;
+            }
             case "stop":
                 handleStopMessage(session);
                 break;
@@ -42,7 +43,7 @@ public class PresenterController extends TextWebSocketHandler {
         }
     }
 
-    private void handlePresenterMessage(WebSocketSession session, JsonObject jsonMessage) throws IOException {
+    private void handlePresenterMessage(@NonNull WebSocketSession session, JsonObject jsonMessage) throws IOException {
         try {
             presenterService.presenter(session, jsonMessage);
             viewerService.sendTargetInfo(session.getId(), jsonMessage);
@@ -51,22 +52,21 @@ public class PresenterController extends TextWebSocketHandler {
         }
     }
 
-    private synchronized void handleStopMessage(WebSocketSession session) {
+    private synchronized void handleStopMessage(@NonNull WebSocketSession session) {
         try {
-            log.info("stop requested");
-            viewerService.notifyEnd(session);
             presenterService.stop(session);
+            viewerService.notifyEnd(session);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
     }
 
 
-    private void handleIceMessage(final JsonObject jsonMessage, final WebSocketSession session) {
+    private void handleIceMessage(final JsonObject jsonMessage, @NonNull final WebSocketSession session) {
         presenterService.iceCandidateReceived(jsonMessage, session);
     }
 
-    private void handleErrorResponse(Throwable throwable, WebSocketSession session)
+    private void handleErrorResponse(Throwable throwable, @NonNull WebSocketSession session)
             throws IOException {
         log.error(throwable.getMessage(), throwable);
 

@@ -1,6 +1,6 @@
 package com.ai.FlatServer.webrtc.controller;
 
-import com.ai.FlatServer.rabbitmq.mapper.JsonMessageDecoder;
+import com.ai.FlatServer.global.rabbitmq.mapper.JsonMessageDecoder;
 import com.ai.FlatServer.webrtc.message.TargetInfoResponseMessage;
 import com.ai.FlatServer.webrtc.service.MediaPipelineService;
 import com.ai.FlatServer.webrtc.service.PresenterService;
@@ -40,10 +40,10 @@ public class ViewerController {
 
     private void handleViewerMessage(JsonObject jsonObject) {
         try {
+
             TargetInfoResponseMessage message = decoder.toTargetInfoResponseMessage(jsonObject);
             mediaPipelineService.createMediaPipeline(message.getTargetId());
             String viewerId = viewerService.initViewer(message);
-            log.info("viewerId: {}", viewerId);
             mediaPipelineService.enableStatsOfId(message.getTargetId());
             String presenterId = presenterService.initPresenter(message.getTargetId());
             mediaPipelineService.connectEach(presenterId, viewerId);
