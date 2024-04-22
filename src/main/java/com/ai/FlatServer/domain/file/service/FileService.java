@@ -30,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -162,7 +161,6 @@ public class FileService {
         throw new FlatException(FlatErrorCode.MXL_NOT_READY);
     }
 
-    @Cacheable(cacheNames = "fileCache", key = "'fav' + #user.getId()")
     public List<FileNameInfo> getFavs(User user) {
         return fileInfoRepository.findAllByFavAndOwnerId(true, user.getId())
                 .stream()
@@ -203,19 +201,18 @@ public class FileService {
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
         Folder parent = folderRepository.findById(fileInfo.getParentFolderId())
                 .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
-        Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(parent.getId());
+        Objects.requireNonNull(cacheManager.getCache("folderCache")).evict("folderInfoCache" + parent.getId());
         if (patchRequest.getIconId() != null) {
             fileInfo.setIconId(patchRequest.getIconId());
         }
         if (patchRequest.getNewFolderId() != null) {
             Folder newParent = folderRepository.findById(patchRequest.getNewFolderId())
                     .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FILE_ID));
-            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(newParent.getId());
+            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict("folderInfoCache" + newParent.getId());
             fileInfo.setParentFolderId(newParent.getId());
         }
         if (patchRequest.getIsFav() != null) {
             fileInfo.setFav(patchRequest.getIsFav());
-            Objects.requireNonNull(cacheManager.getCache("folderCache")).evict("all");
         }
     }
 
