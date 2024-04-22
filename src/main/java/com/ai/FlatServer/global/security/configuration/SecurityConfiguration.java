@@ -11,6 +11,7 @@ import com.ai.FlatServer.global.security.service.CustomOAuth2UserService;
 import com.ai.FlatServer.global.security.service.LoginService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,6 +20,7 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -53,10 +55,7 @@ public class SecurityConfiguration {
                 .sessionManagement(
                         conf -> conf.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(conf -> conf.requestMatchers("/").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user", "/user/emailCheck").permitAll()
-                        .requestMatchers("/audio").permitAll()
-                        .anyRequest().authenticated())
+
                 .logout(c -> c.logoutUrl("/logout")
                         .clearAuthentication(true)
                         .logoutSuccessHandler(customLogoutSuccessHandler))
@@ -65,11 +64,22 @@ public class SecurityConfiguration {
                                         userInfoEndpointConfig -> userInfoEndpointConfig.userService(customOAuth2UserService))
                                 .successHandler(oAuth2SuccessHandler)
                                 .failureHandler(oAuth2FailureHandler)
+
                 )
+                .authorizeHttpRequests(
+                        conf -> conf
+                                .requestMatchers(HttpMethod.POST, "/user", "/user/emailCheck").permitAll()
+                                .anyRequest().authenticated())
                 .addFilterAfter(jsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class)
                 .addFilterBefore(jwtAuthenticationProcessingFilter,
                         JsonUsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers("/error", "/", "/webjars/**", "/index.html", "/img/**", "/audio")
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
     @Bean
