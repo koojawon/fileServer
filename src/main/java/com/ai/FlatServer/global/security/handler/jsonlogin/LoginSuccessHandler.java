@@ -1,6 +1,5 @@
 package com.ai.FlatServer.global.security.handler.jsonlogin;
 
-import com.ai.FlatServer.domain.user.repository.UserRepository;
 import com.ai.FlatServer.global.redis.service.RedisService;
 import com.ai.FlatServer.global.security.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +20,6 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtService jwtService;
     private final RedisService redisService;
-    private final UserRepository userRepository;
 
     @Value("${jwt.refresh.expiration}")
     private Long refreshTokenExpirationPeriod;
