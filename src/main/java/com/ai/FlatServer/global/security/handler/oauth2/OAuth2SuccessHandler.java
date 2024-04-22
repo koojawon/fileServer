@@ -4,6 +4,7 @@ import com.ai.FlatServer.global.security.dto.oauth2.CustomOAuth2User;
 import com.ai.FlatServer.global.security.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -18,9 +19,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) {
+                                        Authentication authentication) throws IOException {
         CustomOAuth2User customOAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         loginSuccess(request, response, customOAuth2User);
+        response.getWriter().write(customOAuth2User.toString());
     }
 
     private void loginSuccess(HttpServletRequest request, HttpServletResponse response,
