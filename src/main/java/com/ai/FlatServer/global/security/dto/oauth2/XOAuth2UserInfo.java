@@ -17,4 +17,9 @@ public class XOAuth2UserInfo extends OAuth2UserInfo {
     public String getNickname() {
         return "";
     }
+
+    @Override
+    public String getEmail() {
+        return "";
+    }
 }

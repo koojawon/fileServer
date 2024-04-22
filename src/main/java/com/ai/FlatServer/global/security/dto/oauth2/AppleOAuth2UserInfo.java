@@ -24,4 +24,9 @@ public class AppleOAuth2UserInfo extends OAuth2UserInfo {
         JsonObject nameObject = jsonObject.getAsJsonObject("name");
         return nameObject.get("firstName").getAsString() + nameObject.get("lastName").getAsString();
     }
+
+    @Override
+    public String getEmail() {
+        return "";
+    }
 }
