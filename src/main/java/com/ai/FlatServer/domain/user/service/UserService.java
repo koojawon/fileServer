@@ -75,7 +75,7 @@ public class UserService {
     public void decreaseFolderCount() {
         User user = getCurrentUser();
         user.setFolderCount(user.getFolderCount() - 1);
-        Objects.requireNonNull(cacheManager.getCache("userName")).put("userInfo" + user.getEmail(), user);
+        Objects.requireNonNull(cacheManager.getCache("userCache")).put("userInfo" + user.getEmail(), user);
         userRepository.save(user);
     }
 
@@ -83,7 +83,7 @@ public class UserService {
     public void increaseFolderCount() {
         User user = getCurrentUser();
         user.setFolderCount(user.getFolderCount() + 1);
-        Objects.requireNonNull(cacheManager.getCache("userName")).put("userInfo" + user.getEmail(), user);
+        Objects.requireNonNull(cacheManager.getCache("userCache")).put("userInfo" + user.getEmail(), user);
         userRepository.save(user);
     }
 }
