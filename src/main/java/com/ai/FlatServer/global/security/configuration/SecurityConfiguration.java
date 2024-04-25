@@ -78,7 +78,8 @@ public class SecurityConfiguration {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.ignoring().requestMatchers("/error", "/", "/webjars/**", "/index.html", "/img/**", "/audio")
+        return web -> web.ignoring()
+                .requestMatchers("/error", "/", "/index.html", "/img/**", "/audio", "/actuator/**")
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
