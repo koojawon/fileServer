@@ -22,7 +22,6 @@ import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -217,11 +216,10 @@ public class FileService {
     }
 
     public List<FileNameInfo> getAllFilesInfo(User user) {
-        List<FileNameInfo> fileList = new ArrayList<>();
-        for (FileInfo f : fileInfoRepository.findByOwnerId(user.getId())) {
-            fileList.add(FolderMapper.FileInfoToFileNameInfoMapper(f));
-        }
-        return fileList;
+        return fileInfoRepository.findByOwnerId(user.getId())
+                .stream()
+                .map(FolderMapper::FileInfoToFileNameInfoMapper)
+                .toList();
     }
 
 
