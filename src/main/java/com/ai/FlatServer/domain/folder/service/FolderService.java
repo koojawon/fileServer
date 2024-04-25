@@ -127,7 +127,7 @@ public class FolderService {
             Folder newParent = folderRepository.findById(folderPatchRequest.getNewParent())
                     .orElseThrow(() -> new FlatException(FlatErrorCode.NO_SUCH_FOLDER_ID));
             Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(newParent.getId());
-            folder.setParentId(newParent.getParentId());
+            folder.setParentId(newParent.getId());
         }
     }
 
