@@ -4,6 +4,7 @@ import com.ai.FlatServer.domain.user.repository.RefreshTokenRepository;
 import com.ai.FlatServer.domain.user.repository.UserRepository;
 import com.ai.FlatServer.domain.user.repository.entity.User;
 import com.ai.FlatServer.domain.user.repository.entity.UserRefreshToken;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -145,7 +146,7 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(accessToken);
             return true;
-        } catch (SignatureException e) {
+        } catch (SignatureException | ExpiredJwtException e) {
             return false;
         }
     }
