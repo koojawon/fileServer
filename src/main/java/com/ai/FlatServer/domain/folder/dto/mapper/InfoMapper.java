@@ -9,7 +9,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FolderMapper {
+public class InfoMapper {
     public static FileNameInfo FileInfoToFileNameInfoMapper(FileInfo fileInfo) {
         return FileNameInfo.builder()
                 .id(fileInfo.getId())
