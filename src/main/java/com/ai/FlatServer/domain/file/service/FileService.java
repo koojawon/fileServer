@@ -6,7 +6,7 @@ import com.ai.FlatServer.domain.file.dto.response.FileDto;
 import com.ai.FlatServer.domain.file.dto.response.FileNameInfo;
 import com.ai.FlatServer.domain.file.respository.FileInfoRepository;
 import com.ai.FlatServer.domain.file.respository.dao.FileInfo;
-import com.ai.FlatServer.domain.folder.dto.mapper.FolderMapper;
+import com.ai.FlatServer.domain.folder.dto.mapper.InfoMapper;
 import com.ai.FlatServer.domain.folder.repository.FolderRepository;
 import com.ai.FlatServer.domain.folder.repository.entity.Folder;
 import com.ai.FlatServer.domain.user.enums.Role;
@@ -78,7 +78,7 @@ public class FileService {
                 Form.NFC);
         String fileUid = UUID.randomUUID().toString();
         String ext = getExt(Objects.requireNonNull(originalFileName));
-
+        
         if (!ext.equals("pdf")) {
             throw new FlatException(FlatErrorCode.UNSUPPORTED_EXTENSION);
         }
@@ -88,6 +88,7 @@ public class FileService {
                 .originalFileName(originalFileName)
                 .uid(fileUid)
                 .mxlPresent(false)
+                .parentFolderId(pdfUploadRequest.getFolderId())
                 .build();
         fileInfoRepository.save(fileInfo);
         addPdfToParentFolder(pdfUploadRequest.getFolderId(), fileInfo);
@@ -163,7 +164,7 @@ public class FileService {
     public List<FileNameInfo> getFavs(User user) {
         return fileInfoRepository.findAllByFavAndOwnerId(true, user.getId())
                 .stream()
-                .map(FolderMapper::FileInfoToFileNameInfoMapper)
+                .map(InfoMapper::FileInfoToFileNameInfoMapper)
                 .toList();
     }
 
@@ -174,14 +175,13 @@ public class FileService {
         if (fileInfo.getFav()) {
             Objects.requireNonNull(cacheManager.getCache("fileCache")).evict("all");
         }
-        File pdf = new File(fileInfo.getUid() + ".pdf");
+        File pdf = new File(getFullPath(fileInfo.getUid() + ".pdf"));
         if (pdf.exists()) {
             if (!pdf.delete()) {
                 throw new RuntimeException("삭제 실패");
             }
             Long parentFolderId = fileInfo.getParentFolderId();
             Objects.requireNonNull(cacheManager.getCache("folderCache")).evict(parentFolderId);
-
         }
         if (fileInfo.isMxlPresent()) {
             File mxl = new File(fileInfo.getUid() + ".mxl");
@@ -218,7 +218,7 @@ public class FileService {
     public List<FileNameInfo> getAllFilesInfo(User user) {
         return fileInfoRepository.findByOwnerId(user.getId())
                 .stream()
-                .map(FolderMapper::FileInfoToFileNameInfoMapper)
+                .map(InfoMapper::FileInfoToFileNameInfoMapper)
                 .toList();
     }
 
