@@ -30,7 +30,8 @@ public class CacheConfig {
                         new GenericJackson2JsonRedisSerializer().configure(
                                 objectMapper1 -> objectMapper1.registerModule(new JavaTimeModule())
                                         .activateDefaultTyping(
-                                                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class)
+                                                BasicPolymorphicTypeValidator.builder()
+                                                        .allowIfBaseType(Object.class)
                                                         .build(), DefaultTyping.EVERYTHING))))
                 .entryTtl(Duration.ofMinutes(30))
                 .disableCachingNullValues();
