@@ -26,9 +26,8 @@ public interface FileInfoRepository extends JpaRepository<FileInfo, Long> {
     @Modifying(flushAutomatically = true)
     @Query("delete from FileInfo f where f.parentFolderId in :ids")
     void deleteAllByParentFolderId(List<Long> ids);
-
-    @Query(value = "select * from FileInfo f where f.parentFolderId in :folderIds", nativeQuery = true)
-    List<FileInfo> selectAllByParentFolderId(List<Long> folderIds);
+    
+    List<FileInfo> findByParentFolderIdIn(List<Long> folderIds);
 
     List<FileInfo> findAllByFavAndOwnerId(boolean b, Long userId);
 
