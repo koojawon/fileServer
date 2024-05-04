@@ -2,7 +2,7 @@ package com.ai.FlatServer.domain.folder.service;
 
 import com.ai.FlatServer.domain.file.respository.FileInfoRepository;
 import com.ai.FlatServer.domain.file.respository.dao.FileInfo;
-import com.ai.FlatServer.domain.folder.dto.mapper.FolderMapper;
+import com.ai.FlatServer.domain.folder.dto.mapper.InfoMapper;
 import com.ai.FlatServer.domain.folder.dto.request.FolderPatchRequest;
 import com.ai.FlatServer.domain.folder.dto.response.FolderInfo;
 import com.ai.FlatServer.domain.folder.enums.FolderType;
@@ -54,7 +54,7 @@ public class FolderService {
 
         List<FileInfo> subFiles = fileInfoRepository.findAllByParentFolderId(folder.getId());
         List<Folder> subFolders = folderRepository.findByParentId(folder.getId());
-        return FolderMapper.FolderToFolderInfoMapper(folder, subFiles, subFolders);
+        return InfoMapper.FolderToFolderInfoMapper(folder, subFiles, subFolders);
     }
 
     @Transactional
