@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class PdfUploadRequest {
-    private Long folderId;
-    private Integer iconId;
+    private final Long folderId;
+    private final Integer iconId;
 }
