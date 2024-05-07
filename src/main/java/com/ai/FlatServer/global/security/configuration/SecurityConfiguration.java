@@ -78,7 +78,7 @@ public class SecurityConfiguration {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
-                .requestMatchers("/error", "/", "/index.html", "/actuator/**")
+                .requestMatchers("/error", "/", "/actuator/**")
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
