@@ -40,6 +40,8 @@ dependencies {
 
     //messageQueue
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
 
     //MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
