@@ -7,6 +7,7 @@ import com.ai.FlatServer.domain.file.dto.response.FileNameInfo;
 import com.ai.FlatServer.domain.file.facade.FileFacade;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +72,7 @@ public class FileController {
             @RequestPart(value = "dto") PdfUploadRequest pdfUploadRequest,
             @RequestPart(value = "file") MultipartFile multipartFile) throws IOException {
         facade.uploadPdf(pdfUploadRequest, multipartFile);
-        return ResponseEntity.status(201).build();
+        return ResponseEntity.created(URI.create("/folder/" + pdfUploadRequest.getFolderId())).build();
     }
 
     @PostMapping("/mxl")
