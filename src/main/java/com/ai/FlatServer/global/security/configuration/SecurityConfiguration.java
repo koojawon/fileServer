@@ -55,7 +55,6 @@ public class SecurityConfiguration {
                 .sessionManagement(
                         conf -> conf.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
-
                 .logout(c -> c.logoutUrl("/logout")
                         .clearAuthentication(true)
                         .logoutSuccessHandler(customLogoutSuccessHandler))
@@ -79,7 +78,7 @@ public class SecurityConfiguration {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
-                .requestMatchers("/error", "/", "/index.html", "/img/**", "/audio", "/actuator/**")
+                .requestMatchers("/error", "/", "/index.html", "/actuator/**")
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
