@@ -6,7 +6,6 @@ import com.ai.FlatServer.domain.file.dto.response.FileDto;
 import com.ai.FlatServer.domain.file.dto.response.FileNameInfo;
 import com.ai.FlatServer.domain.file.respository.dao.FileInfo;
 import com.ai.FlatServer.domain.file.service.FileService;
-import com.ai.FlatServer.domain.folder.service.FolderService;
 import com.ai.FlatServer.domain.user.enums.Role;
 import com.ai.FlatServer.domain.user.repository.entity.User;
 import com.ai.FlatServer.domain.user.service.UserService;
@@ -25,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileFacade {
 
     private final FileService fileService;
-    private final FolderService folderService;
     private final UserService userService;
     private final MessageService messageService;
 
@@ -50,8 +48,6 @@ public class FileFacade {
     }
 
     public void uploadPdf(PdfUploadRequest pdfUploadRequest, MultipartFile multipartFile) throws IOException {
-        User user = userService.getCurrentUser();
-        folderService.checkFolderAuthority(user, pdfUploadRequest.getFolderId());
         String s = fileService.savePdf(multipartFile, pdfUploadRequest);
         messageService.sendTransformRequestMessage(s);
     }
@@ -64,14 +60,10 @@ public class FileFacade {
     }
 
     public void deleteFile(Long targetFileId) {
-        User user = userService.getCurrentUser();
-        fileService.checkFileAuthority(user, targetFileId);
         fileService.removeFile(targetFileId);
     }
 
     public void patchFile(Long targetFileId, FilePatchRequest filePatchRequest) {
-        User user = userService.getCurrentUser();
-        fileService.checkFileAuthority(user, targetFileId);
         fileService.patchFile(targetFileId, filePatchRequest);
     }
 

@@ -17,6 +17,8 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,6 +39,7 @@ public class FileController {
     private final FileFacade facade;
 
     @GetMapping("/mxl/{fileId}")
+    @PreAuthorize("@authorizationChecker.checkFileAuthority(#fileId,authentication)")
     public ResponseEntity<UrlResource> getMxl(@PathVariable Long fileId) throws MalformedURLException {
         FileDto fileDto = facade.getMxl(fileId);
         return ResponseEntity.ok()
@@ -68,9 +71,11 @@ public class FileController {
 
 
     @PostMapping("/pdf")
+    @PreAuthorize("@authorizationChecker.checkFolderAuthority(#pdfUploadRequest.getFolderId(),authentication)")
     public ResponseEntity<ArrayList<Long>> uploadPdf(
             @RequestPart(value = "dto") PdfUploadRequest pdfUploadRequest,
-            @RequestPart(value = "file") MultipartFile multipartFile) throws IOException {
+            @RequestPart(value = "file") MultipartFile multipartFile, Authentication authentication)
+            throws IOException {
         facade.uploadPdf(pdfUploadRequest, multipartFile);
         return ResponseEntity.created(URI.create("/folder/" + pdfUploadRequest.getFolderId())).build();
     }
@@ -83,6 +88,7 @@ public class FileController {
     }
 
     @DeleteMapping("/{targetFileId}")
+    @PreAuthorize("@authorizationChecker.checkFileAuthority(#targetFileId,authentication)")
     public ResponseEntity<Boolean> deleteFile(@PathVariable Long targetFileId) {
         facade.deleteFile(targetFileId);
         return ResponseEntity.ok().build();
@@ -90,6 +96,7 @@ public class FileController {
 
 
     @PatchMapping("/{targetFileId}")
+    @PreAuthorize("@authorizationChecker.checkFileAuthority(#targetFileId,authentication)")
     public ResponseEntity<Boolean> patchFile(@PathVariable Long targetFileId,
                                              @RequestBody FilePatchRequest filePatchRequest) {
         facade.patchFile(targetFileId, filePatchRequest);

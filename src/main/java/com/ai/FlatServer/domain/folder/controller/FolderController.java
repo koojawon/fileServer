@@ -9,6 +9,7 @@ import com.ai.FlatServer.domain.user.service.UserService;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -27,25 +28,25 @@ public class FolderController {
     private final UserService userService;
 
     @GetMapping("/{folderId}")
-    public ResponseEntity<FolderInfo> getFolder(@PathVariable Long folderId) {
-        User user = userService.getCurrentUser();
-        folderService.checkFolderAuthority(user, folderId);
-        FolderInfo folderResult = folderService.getFolderWithId(folderId);
+    @PreAuthorize("@authChecker.checkFolderAuthority(#targetFolderId,authentication)")
+    public ResponseEntity<FolderInfo> getFolder(@PathVariable Long targetFolderId) {
+        FolderInfo folderResult = folderService.getFolderWithId(targetFolderId);
         return ResponseEntity.ok(folderResult);
     }
 
 
     @PostMapping
+    @PreAuthorize("@authChecker.checkFolderAuthority(#folderCreationRequest.getCurrentFolderId(),authentication)")
     public ResponseEntity<Boolean> createFolder(@RequestBody FolderCreationRequest folderCreationRequest) {
         User user = userService.getCurrentUser();
-        userService.checkCreateAvailability(user);
-        folderService.createFolder(folderCreationRequest.getFolderName(),
-                folderCreationRequest.getCurrentFolderId(), user);
+        folderService.createFolder(folderCreationRequest.getFolderName(), folderCreationRequest.getCurrentFolderId(),
+                user);
         userService.decreaseFolderCount();
         return ResponseEntity.created(URI.create("")).build();
     }
 
     @DeleteMapping("/{targetFolderId}")
+    @PreAuthorize("@authChecker.checkFolderAuthority(#targetFolderId,authentication)")
     public ResponseEntity<Boolean> deleteFolder(@PathVariable Long targetFolderId) {
         folderService.deleteFolder(targetFolderId);
         userService.increaseFolderCount();
@@ -54,6 +55,7 @@ public class FolderController {
 
 
     @PatchMapping("/{targetFolderId}")
+    @PreAuthorize("@authChecker.checkFolderAuthority(#targetFolderId,authentication)")
     public ResponseEntity<Boolean> changeName(@PathVariable Long targetFolderId,
                                               @RequestBody FolderPatchRequest folderPatchRequest) {
         folderService.patchUpdate(folderPatchRequest, targetFolderId);
