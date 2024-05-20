@@ -26,11 +26,13 @@ public interface FileInfoRepository extends JpaRepository<FileInfo, Long> {
     @Modifying(flushAutomatically = true)
     @Query("delete from FileInfo f where f.parentFolderId in :ids")
     void deleteAllByParentFolderId(List<Long> ids);
-    
+
     List<FileInfo> findByParentFolderIdIn(List<Long> folderIds);
 
+    @Query(value = "select * from FileInfo f where f.fav = :b and f.ownerId = :userId", nativeQuery = true)
     List<FileInfo> findAllByFavAndOwnerId(boolean b, Long userId);
 
     @Cacheable(cacheNames = "fileCache", key = "'all'+#userId")
+    @Query(value = "select * from FileInfo f where f.ownerId = :userId", nativeQuery = true)
     List<FileInfo> findByOwnerId(Long userId);
 }
