@@ -1,6 +1,6 @@
 package com.ai.FlatServer.domain.file.respository.dao;
 
-import com.ai.FlatServer.global.repository.entity.BaseEntity;
+import com.ai.FlatServer.global.repository.entity.OwnableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class FileInfo extends BaseEntity {
+public class FileInfo extends OwnableEntity {
 
     @Id
     @Column(updatable = false, nullable = false)
@@ -43,6 +43,4 @@ public class FileInfo extends BaseEntity {
 
     @Column(nullable = false)
     private Long parentFolderId;
-
-    private Long ownerId;
 }
