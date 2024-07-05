@@ -11,7 +11,6 @@ import com.ai.FlatServer.domain.user.repository.entity.User;
 import com.ai.FlatServer.domain.user.service.UserService;
 import com.ai.FlatServer.global.exceptions.FlatErrorCode;
 import com.ai.FlatServer.global.exceptions.FlatException;
-import com.ai.FlatServer.global.rabbitmq.service.MessageService;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
@@ -25,11 +24,8 @@ public class FileFacade {
 
     private final FileService fileService;
     private final UserService userService;
-    private final MessageService messageService;
 
     public FileDto getMxl(Long fileId) throws MalformedURLException {
-        User user = userService.getCurrentUser();
-        fileService.checkFileAuthority(user, fileId);
         return fileService.getMxl(fileId);
     }
 
@@ -49,7 +45,6 @@ public class FileFacade {
 
     public void uploadPdf(PdfUploadRequest pdfUploadRequest, MultipartFile multipartFile) throws IOException {
         String s = fileService.savePdf(multipartFile, pdfUploadRequest);
-        messageService.sendTransformRequestMessage(s);
     }
 
     public void uploadMxl(MultipartFile multipartFile) throws IOException {
