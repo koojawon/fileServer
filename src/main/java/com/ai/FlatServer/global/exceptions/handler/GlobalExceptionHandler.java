@@ -34,10 +34,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FlatException.class)
     public ResponseEntity<ErrorResponse> handleFlatException(FlatException e) {
-
-        ErrorResponse response = ErrorResponse.builder(e, e.getFlatErrorCode().getStatusCode(),
-                e.getFlatErrorCode().getStatusMessage()).build();
-
+        ErrorResponse response = ErrorResponse
+                .builder(e, e.getFlatErrorCode().getStatusCode(), e.getFlatErrorCode().getStatusMessage())
+                .build();
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }
+

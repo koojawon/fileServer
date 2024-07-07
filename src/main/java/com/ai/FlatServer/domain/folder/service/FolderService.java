@@ -66,8 +66,9 @@ public class FolderService {
                 .folderName(folderName)
                 .parentId(surFolder.getId())
                 .type(FolderType.LEAF)
-                .ownerId(user.getId())
                 .build();
+
+        folder.setOwnerId(user.getId());
         folderRepository.save(folder);
     }
 
@@ -75,10 +76,10 @@ public class FolderService {
     public void createRootFolderFor(User user) {
         Folder folder = Folder.builder()
                 .folderName("root")
-                .ownerId(user.getId())
                 .parentId(1L)
                 .type(FolderType.ROOT)
                 .build();
+        folder.setOwnerId(user.getId());
         folderRepository.saveAndFlush(folder);
         user.setUserRootFolderId(folder.getId());
     }

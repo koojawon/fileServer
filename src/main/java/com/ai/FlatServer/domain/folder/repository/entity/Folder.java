@@ -1,7 +1,7 @@
 package com.ai.FlatServer.domain.folder.repository.entity;
 
 import com.ai.FlatServer.domain.folder.enums.FolderType;
-import com.ai.FlatServer.global.repository.entity.BaseEntity;
+import com.ai.FlatServer.global.repository.entity.OwnableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @Builder
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class Folder extends BaseEntity {
+public class Folder extends OwnableEntity {
     @Id
     @Column(updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +35,4 @@ public class Folder extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private FolderType type;
-
-    private Long ownerId;
 }

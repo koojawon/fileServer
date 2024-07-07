@@ -51,7 +51,7 @@ public class FolderTest {
         public void deleteFolder() {
             //given
             Folder folder = folderRepository.saveAndFlush(
-                    Folder.builder().folderName("test").parentId(1L).type(FolderType.LEAF).ownerId(1L).build());
+                    Folder.builder().folderName("test").parentId(1L).type(FolderType.LEAF).build());
             //when
             folderService.deleteFolder(folder.getId());
             //then
@@ -115,9 +115,9 @@ public class FolderTest {
         @Transactional
         public void moveFolder() {
             //given
-            Folder folder = Folder.builder().folderName("folder").ownerId(1L).type(FolderType.LEAF).parentId(1L)
+            Folder folder = Folder.builder().folderName("folder").type(FolderType.LEAF).parentId(1L)
                     .build();
-            Folder newFolder = Folder.builder().folderName("newFolder").ownerId(1L).type(FolderType.LEAF).parentId(1L)
+            Folder newFolder = Folder.builder().folderName("newFolder").type(FolderType.LEAF).parentId(1L)
                     .build();
 
             folderRepository.save(folder);
@@ -139,7 +139,7 @@ public class FolderTest {
         @Transactional
         public void moveWrongIdFail() {
             //given
-            Folder folder = Folder.builder().folderName("folder").ownerId(1L).type(FolderType.LEAF).parentId(1L)
+            Folder folder = Folder.builder().folderName("folder").type(FolderType.LEAF).parentId(1L)
                     .build();
 
             folderRepository.saveAndFlush(folder);
@@ -155,7 +155,7 @@ public class FolderTest {
         @Transactional
         public void changeName() {
             //given
-            Folder folder = Folder.builder().folderName("folder").ownerId(1L).type(FolderType.LEAF).parentId(1L)
+            Folder folder = Folder.builder().folderName("folder").type(FolderType.LEAF).parentId(1L)
                     .build();
 
             folderRepository.saveAndFlush(folder);
